@@ -8,11 +8,12 @@ if __name__ == "__main__":
     #  path instance file
      sfile = sys.argv[1]
     
-    #  create instance for Instance :)
      inst = Instance(sfile)
      inst.printI()
 
-
+     solu = Solution(inst)
+     print("\n\n")
+     solu.printS()
 # create instace Algoritmn 
 #     alg = Algoritm(inst)
 

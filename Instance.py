@@ -12,7 +12,7 @@ class Instance:
 
           self.nFlows = int(file.readline())
           line = file.readline().strip().split()
-          self.capF =  [ int(i) for i in line[0:len(line)]  ]
+          self.flowCap =  [ int(i) for i in line[0:len(line)]  ]
            
           for n in range(self.nFlows): 
               line = file.readline().strip().split()
@@ -67,7 +67,7 @@ class Instance:
     def printI(self):
        print("Number of nodes: ",self.nNodes,"\n")
        print("Flows: ",self.nFlows)
-       print("Flow capacity: ",self.capF)
+       print("Flow capacity: ",self.flowCap)
        for i in range(self.nFlows): 
           print("Flow ",i,self.flows[i])
        print("\nNumber of Items: ",self.nV)
