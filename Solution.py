@@ -5,3 +5,5 @@ class Solution:
     def __init__(self, inst: Instance): 
         
         self.inst : Instance =  inst 
+        self.fo = 0
+
