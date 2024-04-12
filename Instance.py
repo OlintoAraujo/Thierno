@@ -39,7 +39,7 @@ class Instance:
              for j in  range(2,len(line)):
                 if line[j] != ':' : 
                    p.append(int(line[j]))
-                if line[j] == ":" or j == len(line) :    
+                if line[j] == ":" or j == len(line)-1 :    
                    self.Rms[i][np] = p
                    p = []  
                    np = np + 1 
@@ -53,7 +53,7 @@ class Instance:
              for j in  range(2,len(line)):
                 if line[j] != ':' : 
                    p.append(int(line[j]))
-                if line[j] == ":" or j == len(line) :    
+                if line[j] == ":" or j == len(line)-1 :    
                    self.Rmt[i][np] = p
                    p = []  
                    np = np + 1 
