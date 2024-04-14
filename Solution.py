@@ -11,27 +11,29 @@ class Solution:
      self.flowCap = inst.flowCap.copy()
   
      
-     self.collectedD ={}
-     self.uncollectedD ={}
      self.flowD ={}
      for d in range(self.inst.nNodes):
-        self.collectedD[d] = [] 
-        self.uncollectedD[d] = self.inst.Vd[d].copy() 
         self.flowD[d] = [-1] * len(self.inst.Vd[d]) 
      
-    
+   
+   def addP(self, d : int, m : int, p : int, flows : list):
+      if self.inst.Rmt[m][p] == 1 :
+         self.fo = self.fo + 2*len(self.inst.Rms[m][p])
+         self.tmp = self.tmp + 1
+      else:   
+         self.fo = self.fo + len(self.inst.Rms[m][p])
+      self.smdp = self.smdp + 1
+      
+      for i in range(len(self.inst.Rms[m][p])): 
+         v = self.inst.Rms[m][p][i]
+         self.flowD[d][v] = flows[i]
+         self.flowCap[flows[i]] = self.flowCap[flows[i]] - self.inst.sV[v]
+        
+
    def printS(self):
 
       print("Objective Function: ",self.fo, "( smdp = ", self.smdp, ", tmp = ",self.tmp,")")    
       print("Flow available capacity: ",self.flowCap)
-
-      print("Collected Items:"); 
-      for d in range(self.inst.nNodes): 
-         print("D",d,": Collected",self.collectedD[d])
-
-      print("Uncollected Items:"); 
-      for d in range(self.inst.nNodes): 
-         print("D",d,": uncollected",self.uncollectedD[d])
 
       print("Flow of collected items: ")
       for d in range(self.inst.nNodes): 

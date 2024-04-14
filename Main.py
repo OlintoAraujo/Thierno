@@ -13,12 +13,9 @@ if __name__ == "__main__":
 
      solu = Solution(inst)
      print("\n\n")
-     solu.printS()
-# create instace Algoritmn 
-#     alg = Algoritm(inst)
 
-
-     #sum = alg.sum_values()
+     alg = Algoritm(inst)
+     alg.greedyConstructive(solu)
      
           
     #  SOLUTION ... continued for stored datas in instance solution

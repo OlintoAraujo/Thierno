@@ -46,18 +46,8 @@ class Instance:
 
           self.Rmt ={}
           for i in range(self.nM):
-             self.Rmt[i] = {}
              line = file.readline().strip().split()
-             p = []
-             np = 0
-             for j in  range(2,len(line)):
-                if line[j] != ':' : 
-                   p.append(int(line[j]))
-                if line[j] == ":" or j == len(line)-1 :    
-                   self.Rmt[i][np] = p
-                   p = []  
-                   np = np + 1 
-          
+             self.Rmt[i] =[ int(i) for i in line[1:len(line)]  ]
              
           line = file.readline().strip().split()
           self.T = int(line[0])
@@ -67,14 +57,24 @@ class Instance:
              line = file.readline().strip().split()
              self.RmtH[i] =[ int(i) for i in line[1:len(line)]  ]
 
-          print(self.RmtH)
-
           self.Vd ={} 
           for i in range(self.nNodes):
              line = file.readline().strip().split()
              self.Vd[int(line[0])] = [ int(i) for i in line[1:len(line)]  ]
- 
-          
+
+          self.dmp ={}
+          for d in range(self.nNodes):
+             self.dmp[d] = {}
+             for m in range(self.nM):
+                self.dmp[d][m] = []  
+                for p in range(len(self.Rms[m])): 
+                   ok = True
+                   for v in range(len(self.Rms[m][p])):  
+                      if not(self.Rms[m][p][v] in self.Vd[d]): 
+                         ok = False
+                         break
+                   self.dmp[d][m].append(ok)   
+
     def printI(self):
        print("Number of nodes: ",self.nNodes,"\n")
        print("Flows: ",self.nFlows)
