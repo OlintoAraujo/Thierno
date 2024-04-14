@@ -6,8 +6,10 @@ class Solution:
        
      self.inst : Instance =  inst 
      self.fo = 0
+     self.smdp = 0
+     self.tmp = 0
      self.flowCap = inst.flowCap.copy()
-   
+  
      
      self.collectedD ={}
      self.uncollectedD ={}
@@ -20,7 +22,7 @@ class Solution:
     
    def printS(self):
 
-      print("Objective Function: ",self.fo)    
+      print("Objective Function: ",self.fo, "( smdp = ", self.smdp, ", tmp = ",self.tmp,")")    
       print("Flow available capacity: ",self.flowCap)
 
       print("Collected Items:"); 

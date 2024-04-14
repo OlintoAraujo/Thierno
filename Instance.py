@@ -58,6 +58,17 @@ class Instance:
                    p = []  
                    np = np + 1 
           
+             
+          line = file.readline().strip().split()
+          self.T = int(line[0])
+
+          self.RmtH ={}
+          for i in range(self.nM):
+             line = file.readline().strip().split()
+             self.RmtH[i] =[ int(i) for i in line[1:len(line)]  ]
+
+          print(self.RmtH)
+
           self.Vd ={} 
           for i in range(self.nNodes):
              line = file.readline().strip().split()
@@ -84,4 +95,7 @@ class Instance:
        print("\nVd :")
        for i in range(self.nNodes): 
           print("Node",i,self.Vd[i])  
-
+       
+       for i in range(self.nNodes): 
+          print("Paths crossing node",i,":",self.flowsNode[i])
+ 
