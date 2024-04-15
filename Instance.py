@@ -44,18 +44,22 @@ class Instance:
                    p = []  
                    np = np + 1 
 
-          self.Rmt ={}
-          for i in range(self.nM):
-             line = file.readline().strip().split()
-             self.Rmt[i] =[ int(i) for i in line[1:len(line)]  ]
-             
+            
           line = file.readline().strip().split()
           self.T = int(line[0])
 
-          self.RmtH ={}
-          for i in range(self.nM):
+          self.Rmt ={}
+          for m in range(self.nM):
              line = file.readline().strip().split()
-             self.RmtH[i] =[ int(i) for i in line[1:len(line)]  ]
+             self.Rmt[m] =[ int(i) for i in line[1:len(line)]  ]
+ 
+          for m in range(self.nM):
+             for i in range(len(self.Rmt[m])):
+                if self.Rmt[m][i] > 0 :
+                   if self.Rmt[m][i] > self.T : 
+                      self.Rmt[m][i] = 0  # set P is outdated 
+                   else:   
+                      self.Rmt[m][i] = 1  
 
           self.Vd ={} 
           for i in range(self.nNodes):
@@ -79,23 +83,23 @@ class Instance:
        print("Number of nodes: ",self.nNodes,"\n")
        print("Flows: ",self.nFlows)
        print("Flow capacity: ",self.flowCap)
-       for i in range(self.nFlows): 
-          print("Flow ",i,self.flows[i])
+       for f in range(self.nFlows): 
+          print("Flow ",f,self.flows[f])
        print("\nNumber of Items: ",self.nV)
        print("Items size: ",self.sV)
        print("\nNumber of applications: ",self.nM)
        print("Rms : ")
-       for i in range(self.nM): 
-          print("Application",i,self.Rms[i])  
+       for m in range(self.nM): 
+          print("Application",m,self.Rms[m])  
 
        print("Rmt :")
-       for i in range(self.nM): 
-          print("Application",i,self.Rmt[i])  
+       for m in range(self.nM): 
+          print("Application",m,self.Rmt[m])  
 
        print("\nVd :")
-       for i in range(self.nNodes): 
-          print("Node",i,self.Vd[i])  
+       for d in range(self.nNodes): 
+          print("Node",d,self.Vd[d])  
        
-       for i in range(self.nNodes): 
-          print("Paths crossing node",i,":",self.flowsNode[i])
+       for d in range(self.nNodes): 
+          print("Paths crossing node",d,":",self.flowsNode[d])
  

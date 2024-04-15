@@ -13,7 +13,9 @@ class Solution:
      
      self.flowD ={}
      for d in range(self.inst.nNodes):
-        self.flowD[d] = [-1] * len(self.inst.Vd[d]) 
+        self.flowD[d] = [-2] * self.inst.nV 
+        for v in self.inst.Vd[d]:
+           self.flowD[d][v] = -1 
      
    
    def addP(self, d : int, m : int, p : int, flows : list):
@@ -23,12 +25,12 @@ class Solution:
       else:   
          self.fo = self.fo + len(self.inst.Rms[m][p])
       self.smdp = self.smdp + 1
-      
-      for i in range(len(self.inst.Rms[m][p])): 
-         v = self.inst.Rms[m][p][i]
-         self.flowD[d][v] = flows[i]
-         self.flowCap[flows[i]] = self.flowCap[flows[i]] - self.inst.sV[v]
-        
+     
+      for i in range(len(flows)): 
+         v = flows[i][0] 
+         f = flows[i][1]
+         self.flowCap[f] = self.flowCap[f] - self.inst.sV[v]
+         self.flowD[d][v] = f
 
    def printS(self):
 
