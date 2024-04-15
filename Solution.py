@@ -10,7 +10,6 @@ class Solution:
      self.tmp = 0
      self.flowCap = inst.flowCap.copy()
   
-     
      self.flowD ={}
      for d in range(self.inst.nNodes):
         self.flowD[d] = [-2] * self.inst.nV 
@@ -20,10 +19,10 @@ class Solution:
    
    def addP(self, d : int, m : int, p : int, flows : list):
       if self.inst.Rmt[m][p] == 1 :
-         self.fo = self.fo + 2*len(self.inst.Rms[m][p])
+         self.fo = self.fo + 2
          self.tmp = self.tmp + 1
       else:   
-         self.fo = self.fo + len(self.inst.Rms[m][p])
+         self.fo = self.fo + 1 
       self.smdp = self.smdp + 1
      
       for i in range(len(flows)): 

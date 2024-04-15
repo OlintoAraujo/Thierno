@@ -21,7 +21,7 @@ class Algoritm:
              else:
                 eList = [len(self.inst.Rms[m][p])/tSizeP, m, p]  
 
-             gList.append(eList) 
+             gList.append(eList) # [ evaluation, m , p ] 
 
        gList = sorted(gList,key=lambda x:x[0], reverse=True) 
 
@@ -33,20 +33,21 @@ class Algoritm:
              if not(self.inst.dmp[d][m][p]): # checks whether device d provides item set P 
                 continue
              flowsV = []
-             dmp = 0
+             dmp = 0  # number of collected items from device d
              for v in self.inst.Rms[m][p]:
                 if solu.flowD[d][v] > -1: 
                    dmp = dmp + 1
                 else: 
-                   if solu.flowD[d][v] > -2: 
-                      for f in self.inst.flowsNode[d]:    
-                         if self.inst.sV[v] < flowCap[f]:
-                            flowCap[f] = flowCap[f] - self.inst.sV[v]
-                            flowsV.append([v,f])
-                            dmp = dmp + 1
-                            break
-                   else:
-                      break;  
+                   ok = False
+                   for f in self.inst.flowsNode[d]:    
+                      if self.inst.sV[v] < flowCap[f]:
+                         flowCap[f] = flowCap[f] - self.inst.sV[v]
+                         flowsV.append([v,f])
+                         dmp = dmp + 1
+                         ok = True
+                         break
+                   if not ok : 
+                      break
                       
              if dmp == len(self.inst.Rms[m][p]):
                 solu.addP(d,m,p,flowsV)
