@@ -46,8 +46,13 @@ var a[MDP] integer;
 var t[<m,p> in MP] integer >=0 <=  if sizeRms[m,p] > 0 then 1 else 0 end;
 var b[MP] integer;
 var y[<d,v,f> in DVF] integer >=0 <= if (path[f,d] == 1 and Vd[d,v] == 1) then 1 else 0 end;
+var Cmin >=0;
 
 maximize fo : sum <m,d,p> in MDP : s[m,d,p]  + sum <m,p> in MP : t[m,p];
+#maximize fo :   Cmin + 0.001 * (sum <m,d,p> in MDP : s[m,d,p]  + sum <m,p> in MP : t[m,p]); 
+
+#subto c0: forall <m,p> in MP do
+#             Cmin <= sum <m,d,p> in MDP : s[m,d,p]  +  t[m,p];
 
 subto c1: forall <f> in F do
                  sum <d,v,f> in DVF : sV[v] * y[d,v,f] <= capFlow[f];
