@@ -34,6 +34,9 @@ param sizeRms[M*Ps] := <0,0> 2,    <0,1> 2, <0,2> 0,
 param Rmt[M*Ps]:=<0,0> 1, <0,1> 0, <0,2> 0,      
                  <1,0> 0, <1,1> 0, <1,2> 0,     
                  <2,0> 1, <2,1> 0, <2,2> 0;
+
+param w[<m,p> in M*Ps] :=  Rmt[m,p] + 1 ;                 
+
 set crossPathD[N] := <0> {0, 1},<1> {2, 3},<2> {0, 1},<3> {0, 1, 2, 3},<4> {2, 3},<5> {0},<6> {0},<7> {3},<8> {3};
 
 set MDP := M*N*Ps;
@@ -45,7 +48,7 @@ set DV := N*V;
 var y[<d,v,f> in DVF] integer >=0 <= if (path[f,d] == 1 and Vd[d,v] == 1) then 1 else 0 end;
 var s[M*Ps] integer >=0 ;
 
-maximize fo : s[0,1]+s[2,0]+s[2,2]; 
+maximize fo : w[0,1] * s[0,1]+ w[2,0] * s[2,0]+ w[2,2] * s[2,2]; 
 
 subto c1: forall <f> in F do
                  sum <d,v,f> in DVF : sV[v] * y[d,v,f] <= capFlow[f];
@@ -55,7 +58,7 @@ subto c2: forall <d,v> in DV do
 
 subto c3: s[0,1] + s[2,0] + s[2,2] >= 1;
 
-subto c4: sum <d,2,f> in DVF : y[d,2,f] >= 4;
+subto c4: sum <d,2,f> in DVF : y[d,2,f] >= 4;   # initial solution
 subto c5: sum <d,3,f> in DVF : y[d,3,f] >= 3;
 subto c6: sum <d,4,f> in DVF : y[d,4,f] >= 1;
 subto c7: sum <d,1,f> in DVF : y[d,6,f] >= 1;
