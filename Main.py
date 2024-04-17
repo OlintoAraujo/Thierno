@@ -18,4 +18,3 @@ if __name__ == "__main__":
      alg.greedyConstructive(solu)
      solu.printS()     
           
-    #  SOLUTION ... continued for stored datas in instance solution
