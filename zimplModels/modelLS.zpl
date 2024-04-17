@@ -43,9 +43,9 @@ set DV := N*V;
 
 
 var y[<d,v,f> in DVF] integer >=0 <= if (path[f,d] == 1 and Vd[d,v] == 1) then 1 else 0 end;
-var s[M*Ps] binary;
+var s[M*Ps] integer >=0 ;
 
-maximize fo :  sum <d,v,f> in DVF :  y[d,v,f]; 
+maximize fo : s[0,1]+s[2,0]+s[2,2]; 
 
 subto c1: forall <f> in F do
                  sum <d,v,f> in DVF : sV[v] * y[d,v,f] <= capFlow[f];
@@ -60,8 +60,8 @@ subto c5: sum <d,3,f> in DVF : y[d,3,f] >= 3;
 subto c6: sum <d,4,f> in DVF : y[d,4,f] >= 1;
 subto c7: sum <d,1,f> in DVF : y[d,6,f] >= 1;
 
-subto x1: s[0,1] <= sum <d,0,f> in DVF : y[d,0,f] ;
-subto x2: s[0,1] <= sum <d,6,f> in DVF : y[d,6,f] ;
+subto x1: s[0,1] <= sum <d,0,f> in DVF : y[d,0,f];
+subto x2: s[0,1] <= sum <d,6,f> in DVF : y[d,6,f];
 subto x3: s[2,0] <= sum <d,0,f> in DVF : y[d,0,f];
 subto x4: s[2,0] <= sum <d,2,f> in DVF : y[d,2,f];
 subto x5: s[2,0] <= sum <d,5,f> in DVF : y[d,5,f];
