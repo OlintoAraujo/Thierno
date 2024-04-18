@@ -47,6 +47,7 @@ var a[MDP] integer;
 var t[<m,p> in MP] integer >=0 <=  if sizeRms[m,p] > 0 then 1 else 0 end;
 var b[MP] integer;
 var y[<d,v,f> in DVF] integer >=0 <= if (path[f,d] == 1 and Vd[d,v] == 1) then 1 else 0 end;
+var w[MVP] binary;
 
 maximize fo : sum <m,d,p> in MDP : s[m,d,p]  + sum <m,p> in MP : t[m,p];
 
@@ -62,8 +63,11 @@ subto c3: forall <m,d,p> in MDP do
 subto c4: forall <m,d,p> in MDP  with sizeRms[m,p] > 0 do
                 sizeRms[m,p] * s[m,d,p] <=  a[m,d,p]; 
 
-subto c5: forall <m,p> in MP do
-             b[m,p] == sum <d,v,f> in DVF with Rmt[m,p] == 1 and Rms[m,p,v] == 1 : y[d,v,f];
+subto c50: forall <m,v,p> in MVP do
+             w[m,v,p] <= sum <d,v,f> in DVF with Rmt[m,p] == 1 and Rms[m,p,v] == 1 : y[d,v,f];
+
+subto c51: forall <m,p> in MP do
+             b[m,p] == sum <m,v,p> in MVP : w[m,v,p];
 
 subto c6: forall <m,p> in MP with sizeRms[m,p] > 0 do
                 sizeRms[m,p] * t[m,p] <=  b[m,p];
