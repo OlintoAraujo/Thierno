@@ -49,7 +49,7 @@ class Algorithm:
                    if not ok : 
                       break
              if dmp == len(self.inst.Rms[m][p]): 
-                solu.addP(m,p,flowsV)
+                solu.addP(0,m,p,flowsV)
              else:
                 for i in range(len(flowsV)): # restore the flow cap because it was not possible to collect P
                    v = flowsV[i][0]  
@@ -57,30 +57,32 @@ class Algorithm:
                    flowCap[f] = flowCap[f] + self.inst.sV[v]
 
           if self.inst.Rmt[m][p] and not solu.collectedRt[m][p]: # try to collect a temporal dependence package P
-             for d in range(self.inst.nNodes):
-                flowsV = []
-                dmp = 0  # number of collected items from device d
-                for v in self.inst.Rms[m][p]:
-                   if not self.inst.isVd[d][v]:  # node d do not provide item v
-                      continue   
-                   if solu.flowD[d][v] > -1: 
-                      dmp = dmp + 1
-                   else: 
-                      ok = False
-                      for f in self.inst.flowsNode[d]:    
-                         if self.inst.sV[v] < flowCap[f]:
-                            flowCap[f] = flowCap[f] - self.inst.sV[v]
-                            flowsV.append([v,f,d])
-                            dmp = dmp + 1
-                            ok = True
-                            break
-                if dmp == len(self.inst.Rms[m][p]): 
-                   solu.addP(m,p,flowsV)
-                else:
-                   for i in range(len(flowsV)): # restore the flow cap because it was not possible to collect P
-                      v = flowsV[i][0]  
-                      f = flowsV[i][1]
-                      flowCap[f] = flowCap[f] + self.inst.sV[v]
+              flowsV = []
+              dmp = 0  # number of collected items from device d
+              for v in self.inst.Rms[m][p]:
+                 ok = False
+                 for d in range(self.inst.nNodes):
+                    if not self.inst.isVd[d][v]:  # node d do not provide item v
+                       continue   
+                    if solu.flowD[d][v] > -1: 
+                       dmp = dmp + 1
+                       ok = True
+                    else: 
+                       for f in self.inst.flowsNode[d]:    
+                          if self.inst.sV[v] < flowCap[f]:
+                             flowCap[f] = flowCap[f] - self.inst.sV[v]
+                             flowsV.append([v,f,d])
+                             dmp = dmp + 1
+                             ok = True
+                             break
+                    if ok : 
+                       break
+              if dmp == len(self.inst.Rms[m][p]): 
+                 solu.addP(1,m,p,flowsV)
+              else:
+                 for i in range(len(flowsV)): # restore the flow cap because it was not possible to collect P
+                    v = flowsV[i][0]  
+                    f = flowsV[i][1]
+                    flowCap[f] = flowCap[f] + self.inst.sV[v]
  
-                
     

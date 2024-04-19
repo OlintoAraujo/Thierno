@@ -25,22 +25,27 @@ class Solution:
         self.collectedRt[m] = [False] * len(self.inst.Rms[m])  
 
    
-   def addP(self, m : int, p : int, flows : list):
-      self.fo = self.fo + 1 
-      self.smdp = self.smdp + 1
-      self.collectedRm[m][p] = self.collectedRm[m][p] + 1 
+   def addP(self, typeP : int, m : int, p : int, flows : list):# typeP :  0 Rms or Rmt (need to check);   1 Rmt (only)
+      ok = False
+      if typeP == 0 : 
+         ok = True
+         self.fo = self.fo + 1 
+         self.smdp = self.smdp + 1
+         self.collectedRm[m][p] = self.collectedRm[m][p] + 1 
     
       if self.inst.Rmt[m][p] and not(self.collectedRt[m][p]):
+         ok = True
          self.collectedRt[m][p] = True
          self.fo = self.fo+1
          self.tmp = self.tmp + 1
 
-      for i in range(len(flows)): 
-         v = flows[i][0] 
-         f = flows[i][1]
-         d = flows[i][2]
-         self.flowCap[f] = self.flowCap[f] - self.inst.sV[v]
-         self.flowD[d][v] = f
+      if ok : 
+         for i in range(len(flows)): 
+            v = flows[i][0] 
+            f = flows[i][1]
+            d = flows[i][2]
+            self.flowCap[f] = self.flowCap[f] - self.inst.sV[v]
+            self.flowD[d][v] = f
 
 
    def printS(self):
