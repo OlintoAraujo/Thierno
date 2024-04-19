@@ -20,18 +20,21 @@ class Solution:
      for m in range(self.inst.nM):
         self.collectedRm[m] = [0] * len(self.inst.Rms[m])  
 
- 
+     self.collectedRt ={}
+     for m in range(self.inst.nM):
+        self.collectedRt[m] = [False] * len(self.inst.Rms[m])  
+
    
    def addP(self, d : int, m : int, p : int, flows : list):
-      if self.inst.Rmt[m][p] == 1 :
-         self.fo = self.fo + 2
-         self.tmp = self.tmp + 1
-      else:   
-         self.fo = self.fo + 1 
+      self.fo = self.fo + 1 
       self.smdp = self.smdp + 1
-
       self.collectedRm[m][p] = self.collectedRm[m][p] + 1 
-     
+    
+      if self.inst.Rmt[m][p] and not(self.collectedRt[m][p]):
+         self.collectedRt[m][p] = True
+         self.fo = self.fo+1
+         self.tmp = self.tmp + 1
+
       for i in range(len(flows)): 
          v = flows[i][0] 
          f = flows[i][1]
@@ -50,4 +53,10 @@ class Solution:
 
       print("Collected P in Rm:")
       for m in range(self.inst.nM):
-         print("Application ",m,":",self.collectedRm[m])   
+         print("Application ",m,":",self.collectedRm[m])  
+      
+      print("Collected P in Rt:")
+      for m in range(self.inst.nM):
+         print("Application ",m,":",self.collectedRt[m])  
+
+

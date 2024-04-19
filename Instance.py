@@ -54,19 +54,19 @@ class Instance:
              self.Rmt[m] =[ int(i) for i in line[1:len(line)]  ]
  
           for m in range(self.nM):
-             for i in range(len(self.Rmt[m])):
-                if self.Rmt[m][i] > 0 :
-                   if self.Rmt[m][i] > self.T : 
-                      self.Rmt[m][i] = 0  # set P is outdated 
+             for p in range(len(self.Rmt[m])):
+                if self.Rmt[m][p] > 0 :
+                   if self.Rmt[m][p] > self.T : 
+                      self.Rmt[m][p] = False  # set P is outdated 
                    else:   
-                      self.Rmt[m][i] = 1  
+                      self.Rmt[m][p] = True  
 
           self.Vd ={} 
           for i in range(self.nNodes):
              line = file.readline().strip().split()
              self.Vd[int(line[0])] = [ int(i) for i in line[1:len(line)]  ]
 
-          self.dmp ={}
+          self.dmp ={}  # True if device d give the package P to application m
           for d in range(self.nNodes):
              self.dmp[d] = {}
              for m in range(self.nM):

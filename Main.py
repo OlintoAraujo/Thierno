@@ -1,5 +1,5 @@
 import sys
-from Algoritm import *
+from Algorithm import *
 from Instance import *
 from Solution import *
 
@@ -14,7 +14,7 @@ if __name__ == "__main__":
      solu = Solution(inst)
      print("\n\n")
 
-     alg = Algoritm(inst)
+     alg = Algorithm(inst)
      alg.greedyConstructive(solu)
      solu.printS()     
           
