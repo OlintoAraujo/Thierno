@@ -25,7 +25,7 @@ class Solution:
         self.collectedRt[m] = [False] * len(self.inst.Rms[m])  
 
    
-   def addP(self, d : int, m : int, p : int, flows : list):
+   def addP(self, m : int, p : int, flows : list):
       self.fo = self.fo + 1 
       self.smdp = self.smdp + 1
       self.collectedRm[m][p] = self.collectedRm[m][p] + 1 
@@ -38,6 +38,7 @@ class Solution:
       for i in range(len(flows)): 
          v = flows[i][0] 
          f = flows[i][1]
+         d = flows[i][2]
          self.flowCap[f] = self.flowCap[f] - self.inst.sV[v]
          self.flowD[d][v] = f
 

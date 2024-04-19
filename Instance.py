@@ -66,6 +66,12 @@ class Instance:
              line = file.readline().strip().split()
              self.Vd[int(line[0])] = [ int(i) for i in line[1:len(line)]  ]
 
+          self.isVd ={} # is item v provided by d ?  T or F
+          for d in range(self.nNodes):
+             self.isVd[d] = [False] * self.nV 
+             for v in self.Vd[d]:
+                self.isVd[d][v] = True 
+ 
           self.dmp ={}  # True if device d give the package P to application m
           for d in range(self.nNodes):
              self.dmp[d] = {}

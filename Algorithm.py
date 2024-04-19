@@ -36,46 +36,51 @@ class Algorithm:
              dmp = 0  # number of collected items from device d
              for v in self.inst.Rms[m][p]:
                 if solu.flowD[d][v] > -1: 
-                   dmp = dmp + 1
+                   dmp = dmp + 1  #item v has already been collected from device d 
                 else: 
                    ok = False
                    for f in self.inst.flowsNode[d]:    
                       if self.inst.sV[v] < flowCap[f]:
                          flowCap[f] = flowCap[f] - self.inst.sV[v]
-                         flowsV.append([v,f])
+                         flowsV.append([v,f,d])
                          dmp = dmp + 1
                          ok = True
                          break
                    if not ok : 
                       break
              if dmp == len(self.inst.Rms[m][p]): 
-                solu.addP(d,m,p,flowsV)
+                solu.addP(m,p,flowsV)
              else:
-                for i in range(len(flowsV)): # restore the flow capacity because it was not possible to collect P
+                for i in range(len(flowsV)): # restore the flow cap because it was not possible to collect P
                    v = flowsV[i][0]  
                    f = flowsV[i][1]
                    flowCap[f] = flowCap[f] + self.inst.sV[v]
 
-          #if self.inst.Rmt[m][p] and not solu.collectedRt[m][p]:
-          #   flowsV = []
-          #   devices =[]
-          #   dmp = 0  # number of collected items from device d
-          #   for d in range(self.inst.nNodes):
-          #      for v in self.inst.Rms[m][p]:
-          #         if solu.flowD[d][v] < -1:
-          #            continue
-          #         if solu.flowD[d][v] > -1: 
-          #            dmp = dmp + 1
-          #         else: 
-          #            for f in self.inst.flowsNode[d]:    
-          #               if self.inst.sV[v] < flowCap[f]:
-          #                  flowCap[f] = flowCap[f] - self.inst.sV[v]
-          #                  flowsV.append([v,f])
-          #                  dmp = dmp + 1
-          #                  break
-          #      if dmp == len(self.inst.Rms[m][p]):
-          #         print(m,p,dmp,flowsV)
-          #         #solu.addPt(d,m,p,flowsV)
-  
+          if self.inst.Rmt[m][p] and not solu.collectedRt[m][p]: # try to collect a temporal dependence package P
+             for d in range(self.inst.nNodes):
+                flowsV = []
+                dmp = 0  # number of collected items from device d
+                for v in self.inst.Rms[m][p]:
+                   if not self.inst.isVd[d][v]:  # node d do not provide item v
+                      continue   
+                   if solu.flowD[d][v] > -1: 
+                      dmp = dmp + 1
+                   else: 
+                      ok = False
+                      for f in self.inst.flowsNode[d]:    
+                         if self.inst.sV[v] < flowCap[f]:
+                            flowCap[f] = flowCap[f] - self.inst.sV[v]
+                            flowsV.append([v,f,d])
+                            dmp = dmp + 1
+                            ok = True
+                            break
+                if dmp == len(self.inst.Rms[m][p]): 
+                   solu.addP(m,p,flowsV)
+                else:
+                   for i in range(len(flowsV)): # restore the flow cap because it was not possible to collect P
+                      v = flowsV[i][0]  
+                      f = flowsV[i][1]
+                      flowCap[f] = flowCap[f] + self.inst.sV[v]
+ 
                 
     
