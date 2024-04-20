@@ -72,7 +72,7 @@ class Instance:
              for v in self.Vd[d]:
                 self.isVd[d][v] = True 
  
-          self.dmp ={}  # True if device d give the package P to application m
+          self.dmp ={}  # True if device d gives the package P to application m
           for d in range(self.nNodes):
              self.dmp[d] = {}
              for m in range(self.nM):

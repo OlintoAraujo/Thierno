@@ -44,7 +44,7 @@ set MVP := M*V*Ps;
 
 var s[<m,d,p> in MDP] integer >=0 <= if sizeRms[m,p] > 0 then 1 else 0 end; 
 var a[MDP] integer;
-var t[<m,p> in MP] integer >=0 <=  if sizeRms[m,p] > 0 then 1 else 0 end;
+var t[<m,p> in MP] integer >=0 <=  if Rmt[m,p] > 0 then 1 else 0 end;
 var b[MP] integer;
 var y[<d,v,f> in DVF] integer >=0 <= if (path[f,d] == 1 and Vd[d,v] == 1) then 1 else 0 end;
 var w[MVP] binary;
@@ -71,3 +71,20 @@ subto c51: forall <m,p> in MP do
 
 subto c6: forall <m,p> in MP with sizeRms[m,p] > 0 do
                 sizeRms[m,p] * t[m,p] <=  b[m,p];
+
+# LOCAL SEARCH                
+   # fix  strategy 1
+#subto f1_1 : sum <1,2,f> in DVF : y[1,2,f] == 1; 
+#subto f1_2 : sum <1,3,f> in DVF : y[1,3,f] == 1;
+#subto f6_1 : sum <6,2,f> in DVF : y[6,2,f] == 1; 
+#subto f6_2 : sum <6,3,f> in DVF : y[6,3,f] == 1;
+#subto f8_1 : sum <8,2,f> in DVF : y[8,2,f] == 1; 
+#subto f8_2 : sum <8,3,f> in DVF : y[8,3,f] == 1;
+#
+#subto f3_1: sum <3,2,f> in DVF : y[3,2,f] == 1;
+#subto f0_1: sum <0,5,f> in DVF : y[0,5,f] == 1;
+   # fix strategy 2
+#subto s1 : sum <0,d,0> in MDP : s[0,d,0] == 3;
+#subto s2 : sum <1,d,0> in MDP : s[1,d,0] == 4;
+#subto t1 : t[0,0] == 1;
+#subto t2 : t[2,0] == 1;

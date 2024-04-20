@@ -4,50 +4,77 @@ import time
 from Instance import *
 
 
-class Model:
+class MIPmodel:
     
-    def __init__(self):
-#        start_total = time.time()
-        
-        # build model ##########################################################################
-        mdl = Model()
-        start = time.time()      
-        s = modelo.integer_var_dict(keys1=A, keys2=B, keys3=C, keys4=D, name="s")
+   def __init__(self,inst: Instance):
+      
+      self.inst = inst;     
+      
+# variables 
+      self.mdl = Model('OINTbasic')
 
-        modl.add_constraint(modelo.sum(variaveis[a, b, c, d] for a in A for b in B for c in C for d in D) <= 100)
-
-        print("time_var:", time.time() - start)
-        mdl.minimize(sum(i * w[i] for i in [(i) for i in V if i >= self.sol.lb]))
-
-        start = time.time()
-        mdl.add_constraint(sum(w[i] for i in [(i) for i in V if i >= self.sol.lb]) == 1)
-        
-        for k in range(1, lenV):
-            # scheduling arcs
-            x_i_sum = sum(x[i, j] for (i, j) in Al if i == V[k])
-            x_j_sum = sum(x[i, j] for (i, j) in Al if j == V[k])
-
-            # connecting arcs
-            y_j = y[V[k - 1], V[k]]
-            y_i = y[V[k], V[k + 1]] if k < lenV - 1 else 0 
-
-            # injection flow
-            w_expr = self.sol.inst.m * w[V[k]] if V[k] >= self.sol.lb else 0 
-
-            mdl.add_constraint(-x_i_sum + x_j_sum + y_j - y_i  == w_expr)  
+      sb = {(m,d,p): self.mdl.binary_var(name='sb_{}_{}_{}'.format(m,d,p)) for m in range(self.inst.nM) \
+            for d in range(self.inst.nNodes) for p in range(len(self.inst.Rms[m]))}
+      tb = {(m,p): self.mdl.binary_var(name='tb_{}_{}'.format(m,p)) for m in range(self.inst.nM) \
+            for p in range(len(self.inst.Rmt[m])) if self.inst.Rmt[m][p] }
+      y = {(d,v,f): self.mdl.binary_var(name='y_{}_{}_{}'.format(d,v,f)) for d in range(self.inst.nNodes) \
+           for v in range(self.inst.nV) for f in range(self.inst.nFlows)}
             
-        time_model = time.time() - start
-        print("time_const1:", time_model)
-        start = time.time()
-        for (k, n) in pl.items():
-            mdl.add_constraint(sum(x[i, j] for (i, j) in Al if j - i == k) == n)
-        ct = time.time() - start
-        print("time_const2:", ct)
-        print("time_const_total:", time_model + ct)
-        self.time_arc = time_arc
-        self.time_model = time_model
-        self.mdl =  mdl
-        print(f"time_total: {time.time() - start_total}")
+      s = {(m,d,p): self.mdl.integer_var(name='s_{}_{}_{}'.format(m,d,p)) for m in range(self.inst.nM) \
+          for d in range(self.inst.nNodes) for p in range(len(self.inst.Rms[m]))}
+            
+      t = {(m,p): self.mdl.integer_var(name='t_{}_{}'.format(m,p)) for m in range(self.inst.nM) \
+          for p in range(len(self.inst.Rmt[m])) if self.inst.Rmt[m][p] }
 
-    def export_lp(self, filename: str):
-        self.mdl.export_as_lp(filename)
+# Constraints 
+       # a single telemetry item should be a collected by a single flow
+      for d in range(self.inst.nNodes):
+         for v in self.inst.Vd[d]:
+            self.mdl.add_constraint(self.mdl.sum(y[d, v, f] for f in range(self.inst.nFlows)) <=1, \
+                                    ctname=f'collect_{d,v}')
+
+      # capacity of given flows should not be exceeded
+      for f in range(self.inst.nFlows):
+         self.mdl.add_constraint(self.mdl.sum(self.inst.sV[v] * y[d, v, f] for d in self.inst.flows[f] \
+                            for v in self.inst.Vd[d]) <=  self.inst.flowCap[f],ctname=f'capFlow_{f}')
+    
+      # counting spatial dependencies
+      for m in range(self.inst.nM):
+         for d in range(self.inst.nNodes):
+            for p in range(len(self.inst.Rms[m])):
+               if self.inst.dmp[d][m][p]: # True if device d gives the package P to appliation m
+                  self.mdl.add_constraint(s[m,d,p] == self.mdl.sum(y[d, v, f] \
+                  for v in self.inst.Rms[m][p] if v in self.inst.Vd[d]\
+                  for f in range(self.inst.nFlows) if d in self.inst.flows[f] ),ctname=f'smdp{m,d,p}')
+      # spatial dependencies
+      for m in range(self.inst.nM):
+         for d in range(self.inst.nNodes):
+            for p in range(len(self.inst.Rms[m])):
+               if self.inst.dmp[d][m][p]: # True if device d gives the package P to appliation m
+                  self.mdl.add_constraint(sb[m,d,p] * len(self.inst.Rms[m][p])  <= s[m,d,p],\
+                  ctname=f'sb{m,d,p}')
+      # counting temporal
+      for m in range(self.inst.nM):
+         for p in range(len(self.inst.Rms[m])):
+            if self.inst.Rmt[m][p]:  
+               self.mdl.add_constraint(t[m,p] == self.mdl.sum(y[d, v, f] \
+               for d in range(self.inst.nNodes) if self.inst.dmp[d][m][p]\
+               for v in self.inst.Rms[m][p] if v in self.inst.Vd[d]\
+               for f in range(self.inst.nFlows) if d in self.inst.flows[f]), ctname=f't{m,p}')
+      # temporal dependencies
+      for m in range(self.inst.nM):
+         for p in range(len(self.inst.Rms[m])):
+            if self.inst.Rmt[m][p]:  
+               self.mdl.add_constraint(tb[m,p] * len(self.inst.Rms[m][p]) <= t[m,p],ctname=f'tb{m,p}')
+      # the objective function
+      obj_function = self.mdl.sum(sb[m,d,p] for m in range(self.inst.nM) \
+      for p in range(len(self.inst.Rms[m]))  \
+      for d in range(self.inst.nNodes) if self.inst.dmp[d][m][p]) +\
+      self.mdl.sum(tb[m,p] for m in range(self.inst.nM)\
+      for p in range(len(self.inst.Rms[m])) if self.inst.Rmt[m][p])
+      
+      self.mdl.maximize(obj_function)
+
+
+   def export_lp(self, filename: str):
+      self.mdl.export_as_lp(filename)

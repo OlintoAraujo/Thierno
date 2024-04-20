@@ -2,6 +2,7 @@ import sys
 from Algorithm import *
 from Instance import *
 from Solution import *
+from MIPmodel import *
 
 if __name__ == "__main__":
 
@@ -17,4 +18,6 @@ if __name__ == "__main__":
      alg = Algorithm(inst)
      alg.greedyConstructive(solu)
      solu.printS()     
-          
+     
+     mip = MIPmodel(inst)
+     mip.export_lp("basicModel.lp")

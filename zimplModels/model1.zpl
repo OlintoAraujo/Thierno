@@ -44,7 +44,7 @@ set MVP := M*V*Ps;
 
 var s[<m,d,p> in MDP] integer >=0 <= if sizeRms[m,p] > 0 then 1 else 0 end; 
 var a[MDP] integer;
-var t[<m,p> in MP] integer >=0 <=  if sizeRms[m,p] > 0 then 1 else 0 end;
+var t[<m,p> in MP] integer >=0 <=  if Rmt[m,p] > 0 then 1 else 0 end;
 var b[MP] integer;
 var y[<d,v,f> in DVF] integer >=0 <= if (path[f,d] == 1 and Vd[d,v] == 1) then 1 else 0 end;
 
