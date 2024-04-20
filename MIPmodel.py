@@ -43,7 +43,7 @@ class MIPmodel:
       for f in range(self.inst.nFlows):
          self.mdl.add_constraint(self.mdl.sum(self.inst.sV[v] * y[d, v, f] for d in self.inst.flows[f] \
                             for v in self.inst.Vd[d]) <=  self.inst.flowCap[f],ctname=f'capFlow_{f}')
-    
+      
       # counting spatial dependencies
       for m in range(self.inst.nM):
          for d in range(self.inst.nNodes):

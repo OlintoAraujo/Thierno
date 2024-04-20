@@ -18,12 +18,13 @@ class Instance:
               line = file.readline().strip().split()
               flow = int(line[0])
               self.flows[flow] = [ int(i) for i in line[1:len(line)]  ]
+              self.flows[flow] = list(set(self.flows[flow])) # eliminates duplicate nodes, start == end
               for i in range(len(self.flows[flow])):
                  node = self.flows[int(line[0])][i]
                  self.flowsNode[node].append(flow);
 
-          for i in range(self.nNodes): # the start node of the flow can be the same as the end node
-             self.flowsNode[i] = set(self.flowsNode[i])
+          for n in range(self.nNodes): 
+             self.flowsNode[n] = list(set(self.flowsNode[n]))
 
           self.nV = int(file.readline())
           line = file.readline().strip().split()
@@ -108,4 +109,3 @@ class Instance:
        
        for d in range(self.nNodes): 
           print("Paths crossing node",d,":",self.flowsNode[d])
-       print(self.dmp) 
