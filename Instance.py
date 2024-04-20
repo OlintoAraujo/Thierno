@@ -108,4 +108,4 @@ class Instance:
        
        for d in range(self.nNodes): 
           print("Paths crossing node",d,":",self.flowsNode[d])
- 
+       print(self.dmp) 
