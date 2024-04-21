@@ -47,7 +47,24 @@ class Solution:
             self.flowCap[f] = self.flowCap[f] - self.inst.sV[v]
             self.flowD[d][v] = f
 
+   def reset(self):
+      self.fo = 0
+      self.smdp = 0
+      self.tmp = 0
+      self.flowCap = self.inst.flowCap.copy()
+  
+      for d in range(self.inst.nNodes):
+         self.flowD[d] = [-2] * self.inst.nV 
+         for v in self.inst.Vd[d]:
+            self.flowD[d][v] = -1 
+     
+      for m in range(self.inst.nM):
+         self.collectedRm[m] = [0] * len(self.inst.Rms[m])  
 
+      for m in range(self.inst.nM):
+         self.collectedRt[m] = [False] * len(self.inst.Rms[m])  
+
+  
    def printS(self):
 
       print("Objective Function: ",self.fo, "( smdp = ", self.smdp, ", tmp = ",self.tmp,")")    

@@ -10,14 +10,15 @@ if __name__ == "__main__":
      sfile = sys.argv[1]
     
      inst = Instance(sfile)
-     inst.printI()
+     #inst.printI()
 
      solu = Solution(inst)
-     print("\n\n")
 
      alg = Algorithm(inst)
      alg.greedyConstructive(solu)
-     solu.printS()     
+     print("Initial Solution, Objective Function Value:",solu.fo,"\n")
      
      mip = MIPmodel(inst)
-     mip.export_lp("basicModel.lp")
+     mip.MIPls(solu)
+     print("\nAfter MIP Local Search, Objective Function Value:",solu.fo)
+
