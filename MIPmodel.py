@@ -92,6 +92,7 @@ class MIPmodel:
       for p in range(len(self.inst.Rms[m])) if self.inst.Rmt[m][p])
       
       self.mdl.maximize(obj_function)
+      self.export_lp('basicModel.lp')
 
    def export_lp(self, filename: str):
       self.mdl.export_as_lp(filename)
@@ -100,6 +101,9 @@ class MIPmodel:
    def MIPls(self, solu: Solution):
       #print("\n\n==================================\nInitial Solution: ",solu.fo)
       # Phase 1  :  Try collect news P's fixing the initial solution
+
+      self.mdl.parameters.timelimit.set(10)
+
       for d in range(self.inst.nNodes):
          for v in range(self.inst.nV):
             if solu.flowD[d][v] > -1:
@@ -152,7 +156,6 @@ class MIPmodel:
 
       for v in lsPhase3:
          self.mdl.remove_constraint(lsPhase3[v])
-      #self.export_lp('basicModel.lp')
 
        # update solution
       solu.reset()
