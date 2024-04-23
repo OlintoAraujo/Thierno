@@ -118,15 +118,15 @@ class MIPmodel:
       yd = sol1.get_value_dict(self.y, keep_zeros=False)
       indices = [chave for chave, valor in yd.items() if valor == 1]
       
-      lsPhase1 = {}
+      lsPhase2 = {}
       for e in indices:
          d = e[0]
          v = e[1]
-         lsPhase1[e] = self.mdl.add_constraint(self.mdl.sum(self.y[d,v,f] for f in self.inst.flowsNode[d]) ==1,\
+         lsPhase2[e] = self.mdl.add_constraint(self.mdl.sum(self.y[d,v,f] for f in self.inst.flowsNode[d]) ==1,\
                                     ctname=f'ls2_{d,v}')
       sol2 = self.mdl.solve()
       for e in indices:
-         self.mdl.remove_constraint(lsPhase1[e])
+         self.mdl.remove_constraint(lsPhase2[e])
       print("Local Search Phase 2: ",sol2.objective_value)
 
       # Phase 3  : Trying to collect new sets P by fixing items, choosing devices and paths to collect the items 
@@ -140,17 +140,21 @@ class MIPmodel:
          v = e[1]
          items[v] = items[v]+1
 
+      lsPhase3 = {}
       for v in range(self.inst.nV):
          if items[v] == 0: 
             continue
-         self.mdl.add_constraint(self.mdl.sum(self.y[d, v, f] \
+         lsPhase3[v] = self.mdl.add_constraint(self.mdl.sum(self.y[d, v, f] \
          for d in range(self.inst.nNodes) if v in self.inst.Vd[d]\
          for f in self.inst.flowsNode[d]) >=items[v], ctname=f'ls3_{v}')
-      self.export_lp('basicModel.lp')
       sol3 = self.mdl.solve()
       print("Local Search Phase 3: ",sol3.objective_value)
 
-      # update solution
+      for v in lsPhase3:
+         self.mdl.remove_constraint(lsPhase3[v])
+      #self.export_lp('basicModel.lp')
+
+       # update solution
       solu.reset()
       for d in range(self.inst.nNodes):
          for v in self.inst.Vd[d]:
