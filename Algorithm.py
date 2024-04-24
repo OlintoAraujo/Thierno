@@ -23,10 +23,10 @@ class Algorithm:
 
              gList.append(eList) # [ evaluation, m , p ] 
 
-       gList = sorted(gList,key=lambda x:x[0], reverse=True) 
-
+       gList = sorted(gList,key=lambda x:x[0]) 
+       
        flowCap = solu.flowCap.copy()
-       for i in range(len(gList)):
+       for i in range(len(gList)-1,-1,-1):
           m = gList[i][1]
           p = gList[i][2]
           for d in range(self.inst.nNodes):

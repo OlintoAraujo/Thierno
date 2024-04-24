@@ -4,6 +4,7 @@ from Instance import *
 from Solution import *
 from MIPmodel import *
 from GenInst import *
+from GRASP import *
 
 if __name__ == "__main__":
 
@@ -29,3 +30,5 @@ if __name__ == "__main__":
    mip.MIPls(solu,5,2)
    print("\nAfter MIP Local Search, Objective Function Value:",solu.fo)
 
+   grasp = GRASP(inst,mip)
+   grasp.run(solu)
