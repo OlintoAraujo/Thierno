@@ -26,6 +26,6 @@ if __name__ == "__main__":
    print("Initial Solution, Objective Function Value:",solu.fo,"\n")
    
    mip = MIPmodel(inst)
-   mip.MIPls(solu,5)
+   mip.MIPls(solu,5,2)
    print("\nAfter MIP Local Search, Objective Function Value:",solu.fo)
 
