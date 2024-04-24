@@ -14,10 +14,10 @@ if __name__ == "__main__":
    min_capacity = int(sys.argv[5])
    max_capacity = int(sys.argv[6])
    inst = NetworkGenerator(nNodes, nFlows, nV, nM, min_capacity, max_capacity)    #  path instance file
-   #sfile = sys.argv[1]
+#   sfile = sys.argv[1]
    
-   #inst = Instance(sfile)
-   #inst.printI()
+#   inst = Instance(sfile)
+#   inst.printI()
 
    solu = Solution(inst)
 
@@ -26,6 +26,6 @@ if __name__ == "__main__":
    print("Initial Solution, Objective Function Value:",solu.fo,"\n")
    
    mip = MIPmodel(inst)
-   mip.MIPls(solu)
+   mip.MIPls(solu,5)
    print("\nAfter MIP Local Search, Objective Function Value:",solu.fo)
 

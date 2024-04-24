@@ -9,7 +9,8 @@ class Solution:
      self.smdp = 0
      self.tmp = 0
      self.flowCap = inst.flowCap.copy()
-  
+     self.collectedItems = [False] * self.inst.nNodes
+
      self.flowD ={}
      for d in range(self.inst.nNodes):
         self.flowD[d] = [-2] * self.inst.nV 
@@ -41,9 +42,10 @@ class Solution:
 
       if ok : 
          for i in range(len(flows)): 
-            v = flows[i][0] 
+            v = flows[i][0]
             f = flows[i][1]
             d = flows[i][2]
+            self.collectedItems[v] = True
             self.flowCap[f] = self.flowCap[f] - self.inst.sV[v]
             self.flowD[d][v] = f
 
@@ -52,7 +54,9 @@ class Solution:
       self.smdp = 0
       self.tmp = 0
       self.flowCap = self.inst.flowCap.copy()
-  
+      self.collectedItems = [False] * self.inst.nNodes
+      
+ 
       for d in range(self.inst.nNodes):
          self.flowD[d] = [-2] * self.inst.nV 
          for v in self.inst.Vd[d]:
