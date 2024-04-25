@@ -5,8 +5,6 @@ from collections import defaultdict
 from random import randint
 
 
-seed = 2023
-random.seed(seed)
 
 def spatial_dependency(nV,T):
     list_items = list(range(nV))
