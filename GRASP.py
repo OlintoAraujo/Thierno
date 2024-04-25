@@ -5,12 +5,15 @@ from Solution import *
 from MIPmodel import *
 
 class GRASP:
-   def __init__(self, inst: Instance, mipLS : MIPmodel):
+   def __init__(self, inst :Instance, mipLS :MIPmodel, alpha :float, iterMax :int, timeSubProb :float):
       self.mipLS = mipLS
       self.inst: Instance = inst
+      
+      self.alpha = alpha 
+      self.iterMax = iterMax
+      self.timeSubProb = timeSubProb      
+
       self.gList = []
-      self.alpha = 0.3
-      self.iterMax = 50
 
       for m in range(self.inst.nM):
          for p in range(len(self.inst.Rms[m])) :
@@ -27,19 +30,19 @@ class GRASP:
       self.gList = sorted(self.gList,key=lambda x:x[0]) 
 
 
-   def greedy(self,solu: Solution):
-      minSizeRCL = 3
+   def randomizedGreedy(self,solu: Solution):
+      minSizeRCL = 5 
       flowCap = solu.flowCap.copy()
       gList = self.gList.copy()
       sizeGList = len(gList)-1
       
       for i in range(sizeGList,-1,-1):
          rcl = math.ceil(self.alpha * (len(gList)-1))
-         if rcl < 3 :
-            if len(gList) < 3 :
+         if rcl < minSizeRCL :
+            if len(gList) < minSizeRCL :
                rcl = len(gList)
             else :   
-               rcl = 3
+               rcl =minSizeRCL 
          cand = (len(gList)-1) - random.randint(0,rcl-1)
          m = gList[cand][1]
          p = gList[cand][2]
@@ -105,11 +108,17 @@ class GRASP:
 
    def run(self, solu: Solution):
       print("GRASP")
-   
+      
+      bestSolu = 0
       for i in range(self.iterMax):
          solu.reset()
-         self.greedy(solu)
-         print(i,")",solu.fo) 
-         
 
+         self.randomizedGreedy(solu)
+         
+         self.mipLS.MIPls(solu,self.timeSubProb,2)
+         
+         if solu.fo > bestSolu:
+            bestSolu = solu.fo
+         
+      print("Best Solution: ",bestSolu)
     

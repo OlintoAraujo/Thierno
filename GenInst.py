@@ -5,17 +5,23 @@ from collections import defaultdict
 from random import randint
 
 
+seed = 2023
+random.seed(seed)
+
+
+
 
 def spatial_dependency(nV,T):
     list_items = list(range(nV))
     num_spatials = random.randint(2,nV/2)
-    spatials_max_length = random.randint(1,3)
+    spatials_max_length = random.randint(1,4)
     spatials = []
     remaining_spatials = list_items.copy()
     for _ in range(num_spatials):
         spatial_length = random.randint(1, spatials_max_length)
         spatial = random.sample(remaining_spatials, spatial_length)
-        spatials.append(spatial)
+        if spatial not in spatials:  #avoid redundance
+            spatials.append(spatial)
     #print(spatials)
     spatials_dict = {}
     temporals_dict = {}
@@ -78,9 +84,6 @@ class NetworkGenerator:
                          break
                    dmp[d][m].append(ok) 
 
-
-
-
         # Generate F flows
         flows_infos = {}
         for f in range(nFlows):
@@ -115,9 +118,6 @@ class NetworkGenerator:
                 if d in flows[f]:
                     flowsNode[d].append(f)
 
-
-
-
         #define the parameters
         self.nNodes = nNodes
         self.nFlows = nFlows
@@ -129,6 +129,7 @@ class NetworkGenerator:
         self.sV = sV
         self.Rms = Rms
         self.Rmt = Rmt
+        self.T = T
         self.flows = flows
         self.flowCap = flowCap
         self.flowsNode = flowsNode
@@ -161,6 +162,55 @@ class NetworkGenerator:
        for d in range(self.nNodes): 
           print("Paths crossing node",d,":",self.flowsNode[d])
 
+    def save_to_file(self, filename):
+        with open(filename, 'w') as f:
+            # nNodes
+            f.write(str(self.nNodes) + '\n')
+
+            # nFlows
+            f.write(str(self.nFlows) + '\n')
+
+            # flows capacities
+            f.write(' '.join(map(str, self.flowCap)) + '\n')
+
+            # flows paths
+            for flow , path in self.flows.items():
+                f.write(str(flow) + ' ' + ' '.join(map(str, path)) + '\n')
+
+            # nV
+            f.write(str(self.nV) + '\n')
+
+            # sV
+            f.write(' '.join(map(str, self.sV)) + '\n')
+
+            # nM
+            f.write(str(self.nM) + '\n')
+
+            # spatial
+            for m in range(self.nM):
+                items = []
+                for spav in self.Rms[m].values():
+                    items.append(' '.join(map(str, spav)))
+                f.write(str(m) + ' : ' + ' : '.join(items) + '\n')
+
+            # time limit
+            f.write(str(self.T) + '\n')
+
+            # temporal
+            for m in range(self.nM):
+                times = []
+                for tmpv in self.Rmt[m].values():
+                    times.append(str(tmpv))
+                f.write(str(m) + ' ' + ' '.join(times) + '\n')
+
+
+            # Write Vd
+            for d, v in self.Vd.items():
+                f.write(str(d) + ' ' + ' '.join(map(str, v)) + '\n')
+
+            
+
+
     
 
 
@@ -172,21 +222,18 @@ if __name__ == "__main__":
     min_capacity = int(sys.argv[5])
     max_capacity = int(sys.argv[6])
     inst = NetworkGenerator(nNodes, nFlows, nV, nM, min_capacity, max_capacity)
-    #inst.printI()
+    inst.printI()
+    inst.save_to_file("instance_" + str(nNodes) + "_" + str(nFlows) + "_" + str(nV) + "_" + str(nM) )
+
     #print(inst.Rms)
     #print(inst.R_m)
     #print(inst.flowCap)
     #print(inst.flows)
     #print(inst.sV)
 
-    print(inst.nFlows)
-
-    for f in range(inst.nFlows):
-       print(inst.flows[f])
-    
-    for n in range(inst.nNodes):
-       if len(inst.flowsNode[n]) > 0:
-          print(inst.flowsNode[n])          
+        
+            
+            
         
         
  
