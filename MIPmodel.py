@@ -139,7 +139,7 @@ class MIPmodel:
                for p in range(len(self.inst.Rms[m])):
                   if self.inst.dmp[d][m][p]:
                      if sol1.get_value(self.sb[m,d,p]) > 0.5 : 
-                        self.sb[m,d,p].ub  == 1
+                        self.sb[m,d,p].lb  == 0 
       
          for m in range(self.inst.nM):
             for d in range(self.inst.nNodes):
