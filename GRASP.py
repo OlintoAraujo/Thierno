@@ -115,7 +115,7 @@ class GRASP:
 
          self.randomizedGreedy(solu)
          
-         self.mipLS.MIPls(solu,self.timeSubProb,2)
+         self.mipLS.MIPls(solu,self.timeSubProb,3)
          
          if solu.fo > bestSolu:
             bestSolu = solu.fo

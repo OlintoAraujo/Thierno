@@ -94,7 +94,7 @@ class MIPmodel:
       self.mdl.maximize(obj_function)
       
       self.export_lp('basicModel.lp')
-
+      exit(1)
    def export_lp(self, filename: str):
       self.mdl.export_as_lp(filename)
 
@@ -117,6 +117,7 @@ class MIPmodel:
 
       if emphasis > 1 : 
          print("Local Search Phase 1: ",sol1.objective_value)
+         
          # Phase 2  : Trying to collect new sets P's by fixing devices and items, choosing new paths to collect items 
          for m in range(self.inst.nM):   # fix solution
             for d in range(self.inst.nNodes):
@@ -126,14 +127,13 @@ class MIPmodel:
                         self.sb[m,d,p].lb  == 1
       
          for m in range(self.inst.nM):
-            for d in range(self.inst.nNodes):
                for p in range(len(self.inst.Rms[m])):
                   if self.inst.Rmt[m][p]:
                      if sol1.get_value(self.tb[m,p]) > 0.5 : 
                         self.tb[m,p].lb  == 1
 
          sol2 = self.mdl.solve()
-            
+         
          for m in range(self.inst.nM):   # release solution
             for d in range(self.inst.nNodes):
                for p in range(len(self.inst.Rms[m])):
@@ -142,7 +142,6 @@ class MIPmodel:
                         self.sb[m,d,p].lb  == 0 
       
          for m in range(self.inst.nM):
-            for d in range(self.inst.nNodes):
                for p in range(len(self.inst.Rms[m])):
                   if self.inst.Rmt[m][p]:
                      if sol1.get_value(self.tb[m,p]) > 0.5 : 
@@ -188,8 +187,10 @@ class MIPmodel:
          k = 0
          for m in range(self.inst.nM):
             for p in range(len(self.inst.Rms[m])):
-               lsPhase31[k] = self.mdl.add_constraint(self.mdl.sum(self.tb[m,p]) >=packages[m][p], ctname=f'ls31_{v}')
-               k = k + 1
+               if packages[m][p] > 0 : 
+                  lsPhase31[k] = self.mdl.add_constraint(self.mdl.sum(self.tb[m,p]) \
+                  >=  packages[m][p], ctname=f'ls31_{v}')
+                  k = k + 1
 
          sol3 = self.mdl.solve()
 
