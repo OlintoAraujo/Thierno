@@ -7,9 +7,9 @@ set IIl := I*I;
 param bigM := 99999;
 param d[IIl] := read "instanceOpenTSP.txt" as "<1n 2n> 3n" skip 1 use nArcs default bigM;
 
-param nodeS := 12;
-param nodeE := 43;
-param onThePathNode[I] := <5> 0  default 0;
+param nodeS := 31;
+param nodeE := 44;
+param onThePathNode[I] := <10> 1  default 0;
 
 set IIll := {<i,j> in IIl  with d[i,j] < bigM};
 
@@ -24,7 +24,7 @@ var u[<i> in I] >= 0 <= if i == nodeS then 0 else infinity end;
 minimize cost : sum <i,j> in II with i != j and d[i,j] < bigM : x[i,j]; 
 
 subto c01: sum <i,nodeS> in II : x[i,nodeS] == 1;
-subto c03: x[nodeE,nodeS] == 1;
+subto c02: x[nodeE,nodeS] == 1;
 
 subto c1: sum <nodeS,j> in II : x[nodeS,j] == 1;
 
