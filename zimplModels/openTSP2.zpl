@@ -12,21 +12,16 @@ param nodeE1 := 2;
 
 set II := {<i,j> in IIl  with d[i,j] < bigD and i != j};
 
-set Nodes:= {0, 3, 4, 5, 6, 10, 15, 20, 25, 30, 35, 40, 45,nodeE1};
-param sizeItems[Nodes]:= <0> 1, <3> 3, <4> 4, <5> 6, <6> 2, <10> 4, <15>5, <20>3, <25> 3, <30> 1, <35>5, <40>6, <45>5, <nodeE1>11;
+set Nodes := {0, 3, 4, 5, 6, 10, 15, 20, 25, 30, 35, 40, 45,nodeE1};
 
-param maxL := 10;
-param Kf := 16;
-param bigM := sum <k> in Nodes: sizeItems[k];
+param bigM := card(I) * 2; 
 
 var x[<i,j> in II] integer  >=0  <= if i == nodeE1 then 0 else 1 end; 
-var y[II] >=0 <= Kf; 
-var w[Nodes] binary;
+var y[II] >=0; 
 
-minimize cost : sum <k> in Nodes: -100 * w[k] + sum <i,j> in II   :  x[i,j]; 
+minimize cost : sum <i,j> in II   :  x[i,j]; 
 
-subto c01: sum <i,nodeE1> in II : x[i,nodeE1] == 1;
-
+subto c0 : sum <i,nodeE1> in II : x[i,nodeE1] == 1;
 subto c1 : sum <nodeS1, j> in II : x[nodeS1,j] == 1;
 
 subto c30: forall <j> in I do 
@@ -35,10 +30,7 @@ subto c30: forall <j> in I do
 subto c31: forall <j> in I with j != nodeS1 and j != nodeE1 do 
              sum <i,j> in II : x[i,j] - sum <j,i> in II : x[j,i] == 0;
 
-
-subto c4: sum <i,j> in II : x[i,j] <= maxL;             
-
-subto d01: sum <nodeS1,i> in II : y[nodeS1,i] == (sum<k> in Nodes: sizeItems[k]*w[k]);
+subto d01: sum <nodeS1,i> in II : y[nodeS1,i] == sum<k> in Nodes: 1; 
 
 subto d1 : forall <i,j> in II do 
               y[i,j] <= bigM *x[i,j];
@@ -46,9 +38,8 @@ subto d1 : forall <i,j> in II do
 subto d3: forall <j> in I-Nodes with j != nodeS1 and j != nodeE1 do
              sum <i,j> in II : y[i,j] - sum <j,i> in II : y[j,i] == 0;
 
-subto d4: forall <j> in Nodes with j != nodeS1 and j != nodeE1 do
-             sum <i,j> in II : y[i,j] - sum <j,i> in II : y[j,i] == sizeItems[j]*w[j];
+subto d4: forall <j> in Nodes with j != nodeS1  do
+             sum <i,j> in II : y[i,j] - sum <j,i> in II : y[j,i] == 1; 
 
-subto d5: sum <i,nodeE1> in II : y[i,nodeE1] == sizeItems[nodeE1]*w[nodeE1];  # if nodeE1 provides items
 
 
