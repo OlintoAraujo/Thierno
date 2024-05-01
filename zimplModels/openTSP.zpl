@@ -11,7 +11,7 @@ param nodeS := 1;
 param nodeE := 2;
 param HasStoD := if d[nodeS,nodeE] < bigM then 1 else 0 end;
 
-param onThePathNode[I] := <0>1, <3>1, <4>1, <5>1, <6>1, <10>1, <15>1, <20>1, <25>1, <30>1, <35>1, <40>1, <45>1  default 0;
+param onThePathNode[I] := <0>1, <3>1, <4>1, <5>1, <6>1, <7> 1,<10>1, <15>1, <20>1, <21>1,<25>1,<27>1, <30>1, <35>1, <40>1, <45>1  default 0;
 
 set IIll := {<i,j> in IIl  with i != j and d[i,j] < bigM};
 
