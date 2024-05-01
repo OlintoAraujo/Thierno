@@ -12,7 +12,7 @@ param nodeE1 := 2;
 
 set II := {<i,j> in IIl  with d[i,j] < bigD and i != j};
 
-set Nodes := {0, 3, 4, 5, 6, 7,10, 15, 20, 21,25, 30, 35, 40, 45,nodeE1};
+set Nodes := {0, 3, 4, 5, 6, 7,10, 15, 20, 17,21,25, 30, 35, 40, 45,nodeE1};
 
 param bigM := card(I) * 2; 
 

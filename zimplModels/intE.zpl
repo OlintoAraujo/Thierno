@@ -12,8 +12,8 @@ param nodeE1 := 2;
 
 set II := {<i,j> in IIl  with d[i,j] < bigD and i != j};
 
-set Nodes:= {0, 3, 4, 5, 6, 10, 15, 20, 25, 30, 35, 40, 45,nodeE1};
-param sizeItems[Nodes]:= <0> 1, <3> 3, <4> 4, <5> 6, <6> 2, <10> 4, <15>5, <20>3, <25> 3, <30> 1, <35>5, <40>6, <45>5, <nodeE1>11;
+set Nodes:= {nodeS1,0, 3, 4, 5, 6, 10, 15, 20, 25, 30, 35, 40, 45,nodeE1};
+param sizeItems[Nodes]:= <nodeS1>1, <0> 1, <3> 3, <4> 4, <5> 6, <6> 2, <10> 4, <15>5, <20>3, <25> 3, <30> 1, <35>5, <40>6, <45>5, <nodeE1>11;
 
 param maxL := 10;
 param Kf := 16;
@@ -49,6 +49,6 @@ subto d3: forall <j> in I-Nodes with j != nodeS1 and j != nodeE1 do
 subto d4: forall <j> in Nodes with j != nodeS1 and j != nodeE1 do
              sum <i,j> in II : y[i,j] - sum <j,i> in II : y[j,i] == sizeItems[j]*w[j];
 
-subto d5: sum <i,nodeE1> in II : y[i,nodeE1] == sizeItems[nodeE1]*w[nodeE1];  # if nodeE1 provides items
+subto d5: sum <i,nodeE1> in II : y[i,nodeE1] == sizeItems[nodeS1]*w[nodeS1]+sizeItems[nodeE1]*w[nodeE1];  # if nodeE1 provides items
 
 
