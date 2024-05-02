@@ -1,6 +1,6 @@
 
 class Instance:
-    def __init__(self, sfile: str):
+    def __init__(self, sfile: str, sfileNet : str):
         
        self.flows:dict={}
        self.flowsNode={}
@@ -86,6 +86,27 @@ class Instance:
                          break
                    self.dmp[d][m].append(ok)   
 
+       self.nCalcFlows= 0 
+       self.nArcs = 0 
+       self.arcs = {} 
+       self.startNode = [] 
+       self.endNode = [] 
+       if len(sfileNet) > 0:
+          with open(sfileNet, 'r') as file:
+             self.nCalcFlows= int(file.readline())
+             self.startNode = [0] * self.nCalcFlows 
+             self.endNode = [0] * self.nCalcFlows
+             for f in range(self.nCalcFlows):
+                line = file.readline().strip().split()
+                self.startNode[f] = int(line[0])    
+                self.endNode[f] = int(line[1])    
+             
+             self.nArcs = int(file.readline())
+             for a in range(self.nArcs):
+                line = file.readline().strip().split()
+                self.arcs[a] = [ int(line[0]), int(line[1])]    
+    
+
     def printI(self):
        print("Number of nodes: ",self.nNodes,"\n")
        print("Flows: ",self.nFlows)
@@ -109,3 +130,13 @@ class Instance:
        
        for d in range(self.nNodes): 
           print("Paths crossing node",d,":",self.flowsNode[d])
+
+       if self.nArcs > 0 : 
+          print("Number of calculated flows:",self.nCalcFlows)
+          print("Start / End  Nodes")
+          for i in range(self.nCalcFlows):
+             print(self.startNode[i], " ",self.endNode[i])
+          print("Arcs (",self.nArcs,"):")
+          for i in range(self.nArcs):
+             print(self.arcs[i][0]," ",self.arcs[i][1])
+ 

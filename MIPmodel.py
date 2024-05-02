@@ -11,7 +11,7 @@ class MIPmodel:
    def __init__(self,inst: Instance):
       
       self.inst = inst;     
-      
+# ===================================== Basic Model      
 # variables 
       self.mdl = Model('OINTbasic')
       self.sb = {(m,d,p): self.mdl.binary_var(name='sb_{}_{}_{}'.format(m,d,p)) for m in range(self.inst.nM) \
@@ -93,11 +93,60 @@ class MIPmodel:
       
       self.mdl.maximize(obj_function)
       
-      self.export_lp('basicModel.lp')
-      exit(1)
-   def export_lp(self, filename: str):
-      self.mdl.export_as_lp(filename)
+      self.export_lp(0,'basicModel.lp')
+   
+# ===================================== Extended Model    
+      if self.inst.nArcs > 0 : 
+         self.mdlE = Model('OINTextended')
+         self.sbe = {(m,d,p): self.mdlE.binary_var(name='sb_{}_{}_{}'.format(m,d,p)) for m in range(self.inst.nM) \
+               for d in range(self.inst.nNodes) for p in range(len(self.inst.Rms[m])) if self.inst.dmp[d][m][p]}
+   
+         self.tbe = {(m,p): self.mdlE.binary_var(name='tb_{}_{}'.format(m,p)) for m in range(self.inst.nM) \
+               for p in range(len(self.inst.Rmt[m])) if self.inst.Rmt[m][p] }
+         
+         self.ye = {(d,v,f): self.mdlE.binary_var(name='y_{}_{}_{}'.format(d,v,f) ) for d in range(self.inst.nNodes) \
+              for v in self.inst.Vd[d] for f in range(self.inst.nFlows) if f in self.inst.flowsNode[d]}
+         
+         se = {(m,d,p): self.mdlE.integer_var(name='s_{}_{}_{}'.format(m,d,p)) for m in range(self.inst.nM) \
+             for d in range(self.inst.nNodes) for p in range(len(self.inst.Rms[m])) if self.inst.dmp[d][m][p]}
+         
+         te = {(m,p): self.mdlE.integer_var(name='t_{}_{}'.format(m,p)) for m in range(self.inst.nM) \
+             for p in range(len(self.inst.Rmt[m])) if self.inst.Rmt[m][p] }
+         
+         we = {(m,p,v): self.mdlE.binary_var(name='w_{}_{}_{}'.format(m,p,v)) for m in range(self.inst.nM) \
+             for p in range(len(self.inst.Rms[m])) if self.inst.Rmt[m][p] \
+             for v in self.inst.Rms[m][p] }
+   
+         xe = {(self.inst.arcs[k][0],self.inst.arcs[k][1],f):\
+              self.mdlE.binary_var(name='x_{}_{}_{}'.format(self.inst.arcs[k][0],self.inst.arcs[k][1],f)) \
+              for k in range(self.inst.nArcs) for f in range(self.inst.nFlows)}
+         
+         x2e = {(i,j,f): self.mdlE.integer_var(name='x2_{}_{}_{}'.format(i,j,f)) \
+              for i in range(self.inst.nNodes) for j in range(self.inst.nNodes) for f in range(self.inst.nFlows) if i != j}
 
+         zSe = {(f): self.mdlE.binary_var(name='zS_{}'.format(f)) for f in range(self.inst.nCalcFlows)}
+         zEe = {(f): self.mdlE.binary_var(name='zE_{}'.format(f)) for f in range(self.inst.nCalcFlows)}
+
+         for f in range(self.inst.nCalcFlows):
+            self.mdlE.add_constraint(self.mdlE.sum(xe[self.inst.startNode[f], self.inst.arcs[k][1], f] \
+            for k in range(self.inst.nArcs) if self.inst.arcs[k][0] == self.inst.startNode[f]) == \
+            zSe[f], ctname=f'startPath{f}')
+            
+            self.mdlE.add_constraint(self.mdlE.sum(xe[self.inst.arcs[k][0], self.inst.endNode[f], f] \
+            for k in range(self.inst.nArcs) if self.inst.arcs[k][1] == self.inst.endNode[f]) == \
+            zEe[f], ctname=f'endPath{f}')
+			    
+            
+#            self.mdl.add_constraint(self.mdl.sum(self.y[d, v, f] for f in self.inst.flowsNode[d]) <=1, \
+#                                    ctname=f'collect_{d,v}')
+         
+         self.export_lp(1,'extendedModel.lp')
+
+   def export_lp(self, model : int , filename: str):
+      if model == 0: 
+         self.mdl.export_as_lp(filename)
+      if model == 1 and self.inst.nArcs > 0: 
+         self.mdlE.export_as_lp(filename)
    
    def MIPls(self, solu: Solution,timeL : int, emphasis : int):
       self.mdl.parameters.timelimit.set(timeL)
