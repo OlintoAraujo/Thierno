@@ -101,6 +101,7 @@ class Instance:
                 self.startNode[f] = int(line[0])    
                 self.endNode[f] = int(line[1])    
              
+             self.maxL= int(file.readline())
              self.nArcs = int(file.readline())
              for a in range(self.nArcs):
                 line = file.readline().strip().split()
@@ -136,6 +137,7 @@ class Instance:
           print("Start / End  Nodes")
           for i in range(self.nCalcFlows):
              print(self.startNode[i], " ",self.endNode[i])
+          print("Maximum Length:",self.maxL)
           print("Arcs (",self.nArcs,"):")
           for i in range(self.nArcs):
              print(self.arcs[i][0]," ",self.arcs[i][1])
