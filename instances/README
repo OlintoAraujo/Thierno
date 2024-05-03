@@ -24,6 +24,7 @@ node2 v1 v2 ...
 
 #===================network (extended problem) File 
 nCFlows  # number of calculated flows
+capacityCalcF1, capacityCalcF2, ..., capacitynCFlows 
 startNode  endNode  # for each calculated flod
 maximum_Length
 nArcs

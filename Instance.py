@@ -91,9 +91,14 @@ class Instance:
        self.arcs = {} 
        self.startNode = [] 
        self.endNode = [] 
+       self.calcFlowCap = []
        if len(sfileNet) > 0:
           with open(sfileNet, 'r') as file:
              self.nCalcFlows= int(file.readline())
+             
+             line = file.readline().strip().split()
+             self.calcFlowCap =  [ int(i) for i in line[0:len(line)]  ]
+             
              self.startNode = [0] * self.nCalcFlows 
              self.endNode = [0] * self.nCalcFlows
              for f in range(self.nCalcFlows):

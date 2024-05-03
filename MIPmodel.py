@@ -95,7 +95,9 @@ class MIPmodel:
       
       self.export_lp(0,'basicModel.lp')
    
-# ===================================== Extended Model    
+# ===================================== Extended Model   
+#TODO : nFlows and nCalcFlows 
+
       if self.inst.nArcs > 0 : 
          self.mdlE = Model('OINTextended')
          self.sbe = {(m,d,p): self.mdlE.binary_var(name='sb_{}_{}_{}'.format(m,d,p)) for m in range(self.inst.nM) \
@@ -105,7 +107,7 @@ class MIPmodel:
                for p in range(len(self.inst.Rmt[m])) if self.inst.Rmt[m][p] }
          
          self.ye = {(d,v,f): self.mdlE.binary_var(name='y_{}_{}_{}'.format(d,v,f) ) for d in range(self.inst.nNodes) \
-              for v in self.inst.Vd[d] for f in range(self.inst.nFlows)}
+              for v in self.inst.Vd[d] for f in range(self.inst.nCalcFlows)}
          
          se = {(m,d,p): self.mdlE.integer_var(name='s_{}_{}_{}'.format(m,d,p)) for m in range(self.inst.nM) \
              for d in range(self.inst.nNodes) for p in range(len(self.inst.Rms[m])) if self.inst.dmp[d][m][p]}
@@ -119,12 +121,12 @@ class MIPmodel:
    
          xe = {(self.inst.arcs[k][0],self.inst.arcs[k][1],f):\
               self.mdlE.binary_var(name='x_{}_{}_{}'.format(self.inst.arcs[k][0],self.inst.arcs[k][1],f)) \
-              for k in range(self.inst.nArcs) for f in range(self.inst.nFlows)}
+              for k in range(self.inst.nArcs) for f in range(self.inst.nCalcFlows)}
          
          x2e = {(self.inst.arcs[k][0],self.inst.arcs[k][1],f):\
               self.mdlE.integer_var(name='x2_{}_{}_{}'.format(self.inst.arcs[k][0],self.inst.arcs[k][1],f),\
-              lb=0,ub=self.inst.flowCap[f]) \
-              for k in range(self.inst.nArcs) for f in range(self.inst.nFlows)}
+              lb=0,ub=self.inst.calcFlowCap[f]) \
+              for k in range(self.inst.nArcs) for f in range(self.inst.nCalcFlows)}
           
          z = {(f): self.mdlE.binary_var(name='z_{}'.format(f)) for f in range(self.inst.nCalcFlows)}
 
@@ -138,7 +140,7 @@ class MIPmodel:
             z[f], ctname=f'endPath{f}')
 			    
          for n in range(self.inst.nNodes):
-            for f in range(self.inst.nFlows):
+            for f in range(self.inst.nCalcFlows):
                self.mdlE.add_constraint(self.mdlE.sum(xe[n, self.inst.arcs[k][1],f]\
                for k in range(self.inst.nArcs) if self.inst.arcs[k][0] == n) <=1, \
                ctname=f'one{n,f}')
@@ -150,13 +152,14 @@ class MIPmodel:
             ctname=f'maxL{f}')
          
          for d in range(self.inst.nNodes):
-            for f in range(self.inst.nFlows):   
+            for f in range(self.inst.nCalcFlows):   
                self.mdlE.add_constraint(self.mdlE.sum(xe[self.inst.arcs[k][0],d,f]\
                for k in range(self.inst.nArcs) if self.inst.arcs[k][1] == d) - \
                self.mdlE.sum(xe[d, self.inst.arcs[k][1],f] \
                for k in range(self.inst.nArcs) if self.inst.arcs[k][0] == d) == 0\
                ,ctname=f'cX_{d,f}')
          
+         # Link between network x and network x2
          bigM = 0
          for v in range(self.inst.nV):
             bigM = bigM + self.inst.sV[v]
@@ -177,18 +180,68 @@ class MIPmodel:
                self.mdlE.sum(x2e[d, self.inst.arcs[k][1],f] \
                for k in range(self.inst.nArcs) if self.inst.arcs[k][0] == d) == \
                -self.mdlE.sum(self.ye[d,v,f] for v in self.inst.Vd[d]),ctname=f'cX2_{d,f}')
-         
+        
          for f in range(self.inst.nCalcFlows):   
             self.mdlE.add_constraint(self.mdlE.sum(x2e[self.inst.arcs[k][0],self.inst.endNode[f],f]\
             for k in range(self.inst.nArcs) if self.inst.arcs[k][1] == self.inst.endNode[f]) == \
             self.mdlE.sum(self.ye[d,v,f] for d in range(self.inst.nNodes) for v in self.inst.Vd[d]),ctname=f'Fn_{self.inst.endNode[f],f}')
         
+         # a single telemetry item should be a collected by a single flow
          for d in range(self.inst.nNodes):
             for v in self.inst.Vd[d]:
-               self.mdlE.add_constraint(self.mdlE.sum(self.ye[d, v, f] for f in range(self.inst.nFlows)) <=1, \
+               self.mdlE.add_constraint(self.mdlE.sum(self.ye[d, v, f] for f in range(self.inst.nCalcFlows)) <=1, \
                                        ctname=f'collect_{d,v}')
-
-				
+         # counting spatial dependencies
+         for m in range(self.inst.nM):
+            for d in range(self.inst.nNodes):
+               for p in range(len(self.inst.Rms[m])):
+                  if self.inst.dmp[d][m][p]: # True if device d gives the package P to appliation m
+                     self.mdlE.add_constraint(se[m,d,p] == self.mdlE.sum(self.ye[d, v, f] \
+                     for v in self.inst.Rms[m][p] if v in self.inst.Vd[d]\
+                     for f in range(self.inst.nCalcFlows) if d in self.inst.flows[f] ),ctname=f'smdp{m,d,p}')
+   
+         # spatial dependencies
+         for m in range(self.inst.nM):
+            for d in range(self.inst.nNodes):
+               for p in range(len(self.inst.Rms[m])):
+                  if self.inst.dmp[d][m][p]: # True if device d gives the package P to appliation m
+                     self.mdlE.add_constraint(self.sbe[m,d,p] * len(self.inst.Rms[m][p])  <= se[m,d,p],\
+                     ctname=f'sb{m,d,p}')
+        
+         # couting temporal 1
+         for m in range(self.inst.nM):
+            for p in range(len(self.inst.Rms[m])):
+               if self.inst.Rmt[m][p]:
+                  for v in self.inst.Rms[m][p]:
+                     self.mdlE.add_constraint(we[m, p, v] <= self.mdlE.sum(self.ye[d, v, f] \
+                     for d in range(self.inst.nNodes) if self.inst.dmp[d][m][p] \
+                     for f in range(self.inst.nCalcFlows)),ctname=f'w{m,p,v}')   
+    
+         # counting temporal 2
+         for m in range(self.inst.nM):
+            for p in range(len(self.inst.Rms[m])):
+               if self.inst.Rmt[m][p]:  
+                  self.mdlE.add_constraint(te[m,p] == self.mdlE.sum(we[m, p, v] \
+                  for v in self.inst.Rms[m][p]), ctname=f't{m,p}')
+         
+         # temporal dependencies
+         for m in range(self.inst.nM):
+            for p in range(len(self.inst.Rms[m])):
+               if self.inst.Rmt[m][p]:  
+                  self.mdlE.add_constraint(self.tbe[m,p] * len(self.inst.Rms[m][p]) <= te[m,p],ctname=f'tb{m,p}')
+    
+# the objective function
+         self.epsilon = 0.01
+         obj_functionE = self.mdlE.sum(self.sbe[m,d,p] for m in range(self.inst.nM) \
+         for p in range(len(self.inst.Rms[m]))  \
+         for d in range(self.inst.nNodes) if self.inst.dmp[d][m][p]) +\
+         self.mdlE.sum(self.tbe[m,p] for m in range(self.inst.nM)\
+         for p in range(len(self.inst.Rms[m])) if self.inst.Rmt[m][p]) - \
+         self.epsilon * self.mdlE.sum(xe[self.inst.arcs[k][0],self.inst.arcs[k][1],f] \
+         for k in range(self.inst.nArcs) for f in range(self.inst.nCalcFlows))
+  
+         self.mdlE.maximize(obj_functionE)
+ 
          self.export_lp(1,'extendedModel.lp')
 
    def export_lp(self, model : int , filename: str):
