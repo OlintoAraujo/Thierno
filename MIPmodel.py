@@ -169,13 +169,20 @@ class MIPmodel:
                ctname=f'x_x2{self.inst.arcs[k][0],self.inst.arcs[k][1],f}')
 
          for d in range(self.inst.nNodes):
-            for f in range(self.inst.nFlows):   # TODO: fix definition of variable y
+            for f in range(self.inst.nCalcFlows):   # TODO: fix definition of variable y
+               if d == self.inst.startNode[f]: 
+                  continue
                self.mdlE.add_constraint(self.mdlE.sum(x2e[self.inst.arcs[k][0],d,f]\
                for k in range(self.inst.nArcs) if self.inst.arcs[k][1] == d) - \
                self.mdlE.sum(x2e[d, self.inst.arcs[k][1],f] \
                for k in range(self.inst.nArcs) if self.inst.arcs[k][0] == d) == \
                -self.mdlE.sum(self.ye[d,v,f] for v in self.inst.Vd[d]),ctname=f'cX2_{d,f}')
          
+         for f in range(self.inst.nCalcFlows):   
+            self.mdlE.add_constraint(self.mdlE.sum(x2e[self.inst.arcs[k][0],self.inst.endNode[f],f]\
+            for k in range(self.inst.nArcs) if self.inst.arcs[k][1] == self.inst.endNode[f]) == \
+            self.mdlE.sum(self.ye[d,v,f] for d in range(self.inst.nNodes) for v in self.inst.Vd[d]),ctname=f'Fn_{self.inst.endNode[f],f}')
+        
          for d in range(self.inst.nNodes):
             for v in self.inst.Vd[d]:
                self.mdlE.add_constraint(self.mdlE.sum(self.ye[d, v, f] for f in range(self.inst.nFlows)) <=1, \
