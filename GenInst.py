@@ -1,4 +1,5 @@
 import sys
+import os
 import random
 import networkx as nx
 from collections import defaultdict
@@ -14,13 +15,13 @@ random.seed(seed)
 def spatial_dependency(nV,T):
     list_items = list(range(nV))
     num_spatials = random.randint(2,nV/2)
-    spatials_max_length = random.randint(1,4)
+    spatials_max_length = random.randint(1,3)
     spatials = []
     remaining_spatials = list_items.copy()
     for _ in range(num_spatials):
         spatial_length = random.randint(1, spatials_max_length)
         spatial = random.sample(remaining_spatials, spatial_length)
-        if spatial not in spatials:  #avoid redundance
+        if spatial not in spatials:
             spatials.append(spatial)
     #print(spatials)
     spatials_dict = {}
@@ -36,10 +37,13 @@ def spatial_dependency(nV,T):
 
 
 class NetworkGenerator:
-    def __init__(self, nNodes: int, nFlows: int, nV: int, nM: int, min_capacity: int, max_capacity: int):
+    def __init__(self, nNodes: int, nFlows: int, pFlows: int, maxL: int, nV: int, nM: int, min_capacity: int, max_capacity: int):
         
         # generate the network infrastructure
         G = nx.barabasi_albert_graph(nNodes, 2)
+
+        # arcs of the network
+        arcs = list(G.edges)
         
         # generate size of telemetry items between 2 and 8
         sV = [random.randint(min_capacity,max_capacity) for _ in range(nV)]
@@ -84,9 +88,15 @@ class NetworkGenerator:
                          break
                    dmp[d][m].append(ok) 
 
+
+
+
         # Generate F flows
+        # set of given flows
+        GF = [i for i in range(int((pFlows * nFlows / 100)))] # set of given flows
         flows_infos = {}
-        for f in range(nFlows):
+        for f in range(nFlows) :
+        #for f in list(set(range(nFlows)) - set(GF)):
             # Choose a random source and destination
             source = random.randint(0, nNodes-1)
             destination = random.randint(0, nNodes-1)
@@ -101,14 +111,14 @@ class NetworkGenerator:
 
         # getting the source, destination and capacity of each flow
         S_f = [source[0] for source in flows_infos.values()]
-        D_f = [destination[1] for destination in flows_infos.values()]
+        E_f = [destination[1] for destination in flows_infos.values()]
         flowCap = [capacity[2] for capacity in flows_infos.values()]
                 
         # getting the shortest path for each flow
         flows = {}
         for f in range(nFlows):
             s = S_f[f]
-            d = D_f[f]
+            d = E_f[f]
             flows[f] = nx.shortest_path(G, s, d)
 
         # getting the flows crossing each device
@@ -118,9 +128,13 @@ class NetworkGenerator:
                 if d in flows[f]:
                     flowsNode[d].append(f)
 
+
+
+
         #define the parameters
         self.nNodes = nNodes
         self.nFlows = nFlows
+        self.pFlows = pFlows
         self.nV = nV
         self.nM = nM
         self.min_capacity = min_capacity
@@ -131,11 +145,17 @@ class NetworkGenerator:
         self.Rmt = Rmt
         self.T = T
         self.flows = flows
+        self.S_f = S_f
+        self.E_f = E_f
         self.flowCap = flowCap
+        self.GF = GF
+        self.maxL = maxL
         self.flowsNode = flowsNode
         self.Vd = Vd
         self.isVd = isVd
         self.dmp = dmp
+        self.arcs = arcs
+        
 
 
     def printI(self):
@@ -208,6 +228,28 @@ class NetworkGenerator:
             for d, v in self.Vd.items():
                 f.write(str(d) + ' ' + ' '.join(map(str, v)) + '\n')
 
+    def save_network(self,filename):
+        with open(filename, 'w') as f:
+            # flows to compute
+            f.write(str(len(list(set(range(self.nFlows)) - set(self.GF)))) + '\n')
+            # capacity of the flows
+            for ff in list(set(range(self.nFlows)) - set(self.GF)):
+                f.write(str(self.flowCap[ff]) + ' ')
+            f.write('\n')
+            # source and destination of the flows
+            for ff in list(set(range(self.nFlows)) - set(self.GF)):
+                f.write(f"{self.S_f[ff]} {self.E_f[ff]}\n")
+            # value of maxL
+            f.write(str(self.maxL) + '\n')
+            # number of arcs in the network
+            f.write(str(2*len(self.arcs)) + '\n')
+            # write arcs of the network
+            for arc in self.arcs:
+                f.write(f"{arc[0]} {arc[1]}\n")
+                f.write(f"{arc[1]} {arc[0]}\n")
+
+
+
             
 
 
@@ -217,19 +259,29 @@ class NetworkGenerator:
 if __name__ == "__main__":
     nNodes = int(sys.argv[1])
     nFlows = int(sys.argv[2])
-    nV = int(sys.argv[3])
-    nM = int(sys.argv[4])
-    min_capacity = int(sys.argv[5])
-    max_capacity = int(sys.argv[6])
-    inst = NetworkGenerator(nNodes, nFlows, nV, nM, min_capacity, max_capacity)
+    pFlows = int(sys.argv[3])
+    maxL = int(sys.argv[4])
+    nV = int(sys.argv[5])
+    nM = int(sys.argv[6])
+    min_capacity = int(sys.argv[7])
+    max_capacity = int(sys.argv[8])
+    inst = NetworkGenerator(nNodes, nFlows, pFlows, maxL, nV, nM, min_capacity, max_capacity)
     inst.printI()
-    inst.save_to_file("instance_" + str(nNodes) + "_" + str(nFlows) + "_" + str(nV) + "_" + str(nM) )
+    
 
+    # Create a folder to store the instances if it does not exist
+    Path_To_Save_Insatnces = "./Instances/" + str(inst.nNodes) + "_" + str(inst.nFlows) + "_" + str(inst.nV) + "_" + str(inst.nM) + str(inst.min_capacity) + "_" + str(inst.max_capacity)
+    if not os.path.exists(Path_To_Save_Insatnces):
+        os.makedirs(Path_To_Save_Insatnces)
+
+    inst.save_to_file(Path_To_Save_Insatnces + "/" + "instance_" + str(nNodes) + "_" + str(nFlows) + "_" + str(nV) + "_" + str(nM) )
+    inst.save_network(Path_To_Save_Insatnces + "/" + "instance_network_" + str(nNodes) + "_" + str(nFlows) + "_" + str(pFlows) + "_" + str(maxL) + "_" + str(nV) + "_" + str(nM) )
     #print(inst.Rms)
     #print(inst.R_m)
     #print(inst.flowCap)
     #print(inst.flows)
     #print(inst.sV)
+    print(inst.GF)
 
         
             
