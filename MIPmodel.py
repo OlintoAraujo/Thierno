@@ -121,7 +121,7 @@ class MIPmodel:
    
          xe = {(self.inst.arcs[k][0],self.inst.arcs[k][1],f):\
               self.mdlE.integer_var(name='x_{}_{}_{}'.format(self.inst.arcs[k][0],self.inst.arcs[k][1],f),\
-              lb =0,ub = self.inst.arcs[k][0] != self.inst.endNode[f]) \
+              lb =0,ub = int(self.inst.arcs[k][0] != self.inst.endNode[f])) \
               for k in range(self.inst.nArcs) for f in range(self.inst.nCalcFlows)}
          
          x2e = {(self.inst.arcs[k][0],self.inst.arcs[k][1],f):\

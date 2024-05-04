@@ -1,3 +1,4 @@
+from docplex.mp.model import Model
 import sys
 import os
 import random
@@ -9,20 +10,80 @@ from random import randint
 seed = 2023
 random.seed(seed)
 
+def TSP(s : int , d : int, Nodes: list,nNodes:int, arcs:list):
+   
+   # Define model
+   mdl = Model('PathModel')
+   
+   # Parameters
+   bigM = nNodes * 2  # Assuming n is defined
+   
+   # Variables
+   x = {(i, j): mdl.integer_var(name='x_{}_{}'.format(i, j), lb=0, ub=(0 if i == d else 1))
+        for (i, j) in arcs}
+   y = {(i, j): mdl.continuous_var(name='y_{}_{}'.format(i, j), lb=0) for (i, j) in arcs}
+   
+   # Objective function
+   mdl.minimize(mdl.sum(x[i, j] for (i, j) in arcs))
+   
+   # Constraints
+   mdl.add_constraint(mdl.sum(x[i,j] for (i,j) in arcs if i == s ) == 1, ctname='c0')
+   mdl.add_constraint(mdl.sum(x[i,j] for (i,j) in arcs if j == d ) == 1, ctname='c1')
+   
+   for ii in range(nNodes):
+       mdl.add_constraint(mdl.sum(x[i, j] for (i,j) in arcs if i == ii) <= 1, ctname='c30_{}'.format(ii))
+   
+   for jj in range(nNodes): 
+      if ( jj == s or jj == d):
+         continue 
+      mdl.add_constraint(mdl.sum(x[i, j] - x[j, i] for (i, j) in arcs if j == jj ) == 0, ctname='c31_{}'.format(jj))
+   
+   mdl.add_constraint(mdl.sum(y[i, j] for (i,j) in arcs if i == s) == len(Nodes), ctname='d01_yNodeS1')
+   
+   for (i, j) in arcs:
+      mdl.add_constraint(y[i,j] <= bigM * x[i,j], ctname='d1_{}_{}'.format(i,j) )
+   
+   for jj in range(nNodes) : 
+      if (jj in Nodes) or jj == s or jj == d: 
+         continue   
+      mdl.add_constraint(mdl.sum(y[i, j] for (i, j) in arcs if j == jj) - \
+      mdl.sum(y[j,i] for (j,i) in arcs if j == jj )== 0, ctname='d3_{}'.format(jj))
+   
+   for jj in Nodes:
+       mdl.add_constraint(mdl.sum(y[i,j] for (i,j) in arcs if j == jj) \
+       - mdl.sum(y[j, i] for (j, i) in arcs if j == jj) == -1, ctname='d4_{}'.format(jj))
+         
+   mdl.export_as_lp("tsp.lp")
+   
+   sol = mdl.solve()
+   path = [s]
+   while s != d:
+      for (i,j) in arcs: 
+         if (i != s): 
+            continue
+         if sol.get_value(x[i,j]) > 0.5: 
+            path.append(j)
+            s = j
+            break
 
+   return path
 
-
-def spatial_dependency(nV,T):
+def spatial_dependency(nV,nM,T):
     list_items = list(range(nV))
     num_spatials = random.randint(2,nV/2)
-    spatials_max_length = random.randint(1,3)
+    spatials_max_length = random.randint(2,4)
+    #spatials_max_length = int(nV/nM)
     spatials = []
     remaining_spatials = list_items.copy()
     for _ in range(num_spatials):
-        spatial_length = random.randint(1, spatials_max_length)
+        if not remaining_spatials:
+            break
+        spatial_length = random.randint(2, spatials_max_length)
+        #spatial_length = int(nV/nM)
+        spatial_length = min(spatial_length, len(remaining_spatials))
         spatial = random.sample(remaining_spatials, spatial_length)
-        if spatial not in spatials:
-            spatials.append(spatial)
+        spatials.append(spatial)
+        remaining_spatials = [elem for elem in remaining_spatials if elem not in spatial]
     #print(spatials)
     spatials_dict = {}
     temporals_dict = {}
@@ -35,18 +96,21 @@ def spatial_dependency(nV,T):
 
 
 
-
 class NetworkGenerator:
-    def __init__(self, nNodes: int, nFlows: int, pFlows: int, maxL: int, nV: int, nM: int, min_capacity: int, max_capacity: int):
+    def __init__(self, nNodes: int, nFlows: int, pFlows: int, maxL: int, nV: int, nM: int, min_size: int, max_size: int):
         
         # generate the network infrastructure
         G = nx.barabasi_albert_graph(nNodes, 2)
 
         # arcs of the network
         arcs = list(G.edges)
+        arcs2way = []
+        for (i,j) in arcs:
+           arcs2way.append((j,i))
+        arcs.extend(arcs2way) 
         
-        # generate size of telemetry items between 2 and 8
-        sV = [random.randint(min_capacity,max_capacity) for _ in range(nV)]
+        # generate size of telemetry items 
+        sV = [random.randint(min_size,max_size) for _ in range(nV)]
         #sV = {}
         #for v in range(nV):
         #    sV[v] = random.randint(min_capacity,max_capacity)
@@ -54,7 +118,7 @@ class NetworkGenerator:
         # generate a subset of telemetry items for each device
         Vd = {}
         for d in range(nNodes):
-            Vd[d] = random.sample(range(nV), random.randint(1, nV))
+            Vd[d] = random.sample(range(nV), random.randint(2, nV))
             Vd[d].sort(reverse=False)
 
         isVd ={} # is item v provided by d ?  T or F
@@ -69,7 +133,7 @@ class NetworkGenerator:
         Rms = {}
         Rmt = {}
         for m in range(nM):
-            dependencies = spatial_dependency(nV,T)
+            dependencies = spatial_dependency(nV,nM,T)
             #Rms[m] = spatial_dependency(nV,T)
             Rms[m] = dependencies[0]
             Rmt[m] = dependencies[1]
@@ -89,8 +153,6 @@ class NetworkGenerator:
                    dmp[d][m].append(ok) 
 
 
-
-
         # Generate F flows
         # set of given flows
         GF = [i for i in range(int((pFlows * nFlows / 100)))] # set of given flows
@@ -104,7 +166,7 @@ class NetworkGenerator:
             while source == destination:
                 destination = random.randint(0, nNodes-1)
             # Choose a random capacity for the flow
-            capacity = random.randint(min_capacity, 2*max_capacity)
+            capacity = random.randint(2*min_size, 2*max_size)
             #capacity = random.randrange(2,20, 2) # to compare 2 to 20
             # Add the flow to the dictionary
             flows_infos[f] = [source, destination, capacity]
@@ -119,7 +181,12 @@ class NetworkGenerator:
         for f in range(nFlows):
             s = S_f[f]
             d = E_f[f]
-            flows[f] = nx.shortest_path(G, s, d)
+            #flows[f] = nx.shortest_path(G, s,  d)
+            Nodes = [ 3, 4, 8]
+            flows[f] = TSP(s,d,Nodes,nNodes,arcs)
+            print(flows[f])
+            print("source:",s," destination:",d)
+            exit(1)
 
         # getting the flows crossing each device
         flowsNode = defaultdict(list)
@@ -137,8 +204,8 @@ class NetworkGenerator:
         self.pFlows = pFlows
         self.nV = nV
         self.nM = nM
-        self.min_capacity = min_capacity
-        self.max_capacity = max_capacity
+        self.min_size = min_size
+        self.max_size = max_size
         self.Vd = Vd
         self.sV = sV
         self.Rms = Rms
@@ -246,7 +313,6 @@ class NetworkGenerator:
             # write arcs of the network
             for arc in self.arcs:
                 f.write(f"{arc[0]} {arc[1]}\n")
-                f.write(f"{arc[1]} {arc[0]}\n")
 
 
 
@@ -257,20 +323,22 @@ class NetworkGenerator:
 
 
 if __name__ == "__main__":
+
     nNodes = int(sys.argv[1])
     nFlows = int(sys.argv[2])
-    pFlows = int(sys.argv[3])
+    pFlows = int(sys.argv[3])  # percentage of given flows. 
     maxL = int(sys.argv[4])
     nV = int(sys.argv[5])
     nM = int(sys.argv[6])
-    min_capacity = int(sys.argv[7])
-    max_capacity = int(sys.argv[8])
-    inst = NetworkGenerator(nNodes, nFlows, pFlows, maxL, nV, nM, min_capacity, max_capacity)
+    min_size= int(sys.argv[7])
+    max_size= int(sys.argv[8])
+    
+    inst = NetworkGenerator(nNodes, nFlows, pFlows, maxL, nV, nM, min_size, max_size)
     inst.printI()
     
 
     # Create a folder to store the instances if it does not exist
-    Path_To_Save_Insatnces = "./Instances/" + str(inst.nNodes) + "_" + str(inst.nFlows) + "_" + str(inst.nV) + "_" + str(inst.nM) + str(inst.min_capacity) + "_" + str(inst.max_capacity)
+    Path_To_Save_Insatnces = "./instances/" + str(inst.nNodes) + "_" + str(inst.nFlows) + "_" + str(inst.nV) + "_" + str(inst.nM) +"_"+str(inst.min_size) + "_" + str(inst.max_size)
     if not os.path.exists(Path_To_Save_Insatnces):
         os.makedirs(Path_To_Save_Insatnces)
 

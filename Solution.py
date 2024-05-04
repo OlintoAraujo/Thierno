@@ -9,7 +9,7 @@ class Solution:
      self.smdp = 0
      self.tmp = 0
      self.flowCap = inst.flowCap.copy()
-     self.collectedItems = [False] * self.inst.nNodes
+     self.collectedItems = [False] * self.inst.nV
 
      self.flowD ={}
      for d in range(self.inst.nNodes):
@@ -54,7 +54,7 @@ class Solution:
       self.smdp = 0
       self.tmp = 0
       self.flowCap = self.inst.flowCap.copy()
-      self.collectedItems = [False] * self.inst.nNodes
+      self.collectedItems = [False] * self.inst.nV
       
  
       for d in range(self.inst.nNodes):
