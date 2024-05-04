@@ -36,5 +36,5 @@ if __name__ == "__main__":
 #   mip.MIPls(solu,5,2)
 #   print("\nAfter MIP Local Search, Objective Function Value:",solu.fo)
 
-#   grasp = GRASP(inst,mip,0.1,5,3)
-#   grasp.run(solu)
+   grasp = GRASP(inst,mip,0.1,5,3)
+   grasp.run(solu)
