@@ -19,21 +19,25 @@ if __name__ == "__main__":
    
    sfile = sys.argv[1]
   
-   sNetFile = ""
-   if len(sys.argv) > 2: 
-      sNetFile = sys.argv[2]
-  
-   print("====================================",sNetFile)
-   inst = Instance(sfile,sNetFile)
+   if len(sys.argv) < 3: 
+      pGF = 100
+   else:
+      pGF = int(sys.argv[2])
+      if pGF > 100 or pGF < 0:
+         print("percentage of given flows out of bounds")
+         exit(1)
+
+   print(pGF)
+   
+   inst = Instance(sfile)
    inst.printI()
-   exit(1)
    solu = Solution(inst)
 
    alg = Algorithm(inst)
    alg.greedyConstructive(solu)
 #   print("Initial Solution, Objective Function Value:",solu.fo,"\n")
    
-   mip = MIPmodel(inst)
+   mip = MIPmodel(inst,pGF)
 #   mip.MIPls(solu,5,2)
 #   print("\nAfter MIP Local Search, Objective Function Value:",solu.fo)
 

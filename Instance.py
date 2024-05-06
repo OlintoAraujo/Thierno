@@ -1,6 +1,6 @@
 
 class Instance:
-    def __init__(self, sfile: str, sfileNet : str):
+    def __init__(self, sfile: str):
         
        self.flows:dict={}
        self.flowsNode={}
@@ -13,12 +13,12 @@ class Instance:
           self.nFlows = int(file.readline())
           line = file.readline().strip().split()
           self.flowCap =  [ int(i) for i in line[0:len(line)]  ]
-           
+          
           for n in range(self.nFlows): 
               line = file.readline().strip().split()
               flow = int(line[0])
               self.flows[flow] = [ int(i) for i in line[1:len(line)]  ]
-              self.flows[flow] = list(set(self.flows[flow])) # eliminates duplicate nodes, start == end
+              #self.flows[flow] = list(set(self.flows[flow])) # eliminates duplicate nodes, start == end
               for i in range(len(self.flows[flow])):
                  node = self.flows[int(line[0])][i]
                  self.flowsNode[node].append(flow);
@@ -86,31 +86,15 @@ class Instance:
                          break
                    self.dmp[d][m].append(ok)   
 
-       self.nCalcFlows= 0 
-       self.nArcs = 0 
-       self.arcs = {} 
-       self.startNode = [] 
-       self.endNode = [] 
-       self.calcFlowCap = []
-       if len(sfileNet) > 0:
-          with open(sfileNet, 'r') as file:
-             self.nCalcFlows= int(file.readline())
-             
+          self.nCalcFlows= 0 # TODO: we need to define it 
+          self.nArcs = 0 
+          self.arcs = {} 
+       
+          self.maxL= int(file.readline())
+          self.nArcs = int(file.readline())
+          for a in range(self.nArcs):
              line = file.readline().strip().split()
-             self.calcFlowCap =  [ int(i) for i in line[0:len(line)]  ]
-             
-             self.startNode = [0] * self.nCalcFlows 
-             self.endNode = [0] * self.nCalcFlows
-             for f in range(self.nCalcFlows):
-                line = file.readline().strip().split()
-                self.startNode[f] = int(line[0])    
-                self.endNode[f] = int(line[1])    
-             
-             self.maxL= int(file.readline())
-             self.nArcs = int(file.readline())
-             for a in range(self.nArcs):
-                line = file.readline().strip().split()
-                self.arcs[a] = [ int(line[0]), int(line[1])]    
+             self.arcs[a] = [ int(line[0]), int(line[1])]    
     
 
     def printI(self):

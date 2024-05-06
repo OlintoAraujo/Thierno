@@ -10,63 +10,6 @@ from random import randint
 seed = 2023
 random.seed(seed)
 
- 
-
-def TSP(s : int , L: int,nNodes:int, arcs:list):
-   
-   # Define model
-   mdl = Model('PathModel')
-   
-   for i in range(nNodes):   # arcs to the fake node
-      arcs.append((i,nNodes))
-
-   # Parameters
-   bigM = nNodes * 2  # Assuming n is defined
-   
-   # Variables
-   x = {(i, j): mdl.integer_var(name='x_{}_{}'.format(i, j))
-        for (i, j) in arcs}
-   
-   u = {i : mdl.continuous_var(name='u_{}'.format(i), lb = 0, ub = bigM*(i != s) ) for i in range(nNodes+1)}
-   # Objective function
-   mdl.minimize(mdl.sum(x[i, j] for (i, j) in arcs))
-
-   mdl.add_constraint(mdl.sum(x[i,j] for (i,j) in arcs if i == s ) == 1, ctname='start')
-   mdl.add_constraint(mdl.sum(x[i,j] for (i,j) in arcs if j == nNodes ) == 1, ctname='end')
-  
-   # Constraints
-   for ii in range(nNodes):
-      mdl.add_constraint(mdl.sum(x[i,j] for (i,j) in arcs if i == ii) <= 1, ctname=f'suc{ii}')
-   
-   for jj in range(nNodes): 
-      if  jj == s:
-         continue 
-      mdl.add_constraint(mdl.sum(x[i, j] for (i, j) in arcs if j == jj ) -\
-      mdl.sum(x[j,i] for (j,i) in arcs if j == jj )  == 0, ctname='b_{}'.format(jj))
-
-   for (ii,jj) in arcs:
-      if  jj == s : 
-         continue
-      mdl.add_constraint( mdl.sum(u[j] for j in range(nNodes+1) if j == jj) >= \
-      mdl.sum(u[i] + 1 + bigM * (x[i,j] - 1) for (i,j) in arcs if j == jj and i == ii) , ctname=f'cycle{ii,jj}') 
-
-   mdl.add_constraint(mdl.sum(x[i, j] for (i, j) in arcs ) == L+1, ctname='length')
-   
-   mdl.export_as_lp("tsp.lp")
-   
-#   sol = mdl.solve()
-#   path = [s]
-#   while s != d:
-#      for (i,j) in arcs: 
-#         if (i != s): 
-#            continue
-#         if sol.get_value(x[i,j]) > 0.5: 
-#            path.append(j)
-#            s = j
-#            break
-#
-#   return path
-
 def spatial_dependency(nV,nM,T):
     list_items = list(range(nV))
     num_spatials = random.randint(2,nV/2)
@@ -96,23 +39,25 @@ def spatial_dependency(nV,nM,T):
 
 
 class NetworkGenerator:
-    def __init__(self, nNodes: int, nFlows: int, pFlows: int, maxL: int, nV: int, nM: int, min_size: int, max_size: int):
+    def __init__(self, nNodes: int, nFlows: int, maxL: int, nV: int, nM: int, min_size: int, max_size: int):
         
+        self.nNodes = nNodes
+        self.maxL = maxL
         # generate the network infrastructure
         G = nx.barabasi_albert_graph(nNodes, 2)
-
+        
         # arcs of the network
         arcs = list(G.edges)
         arcs2way = []
         for (i,j) in arcs:
            arcs2way.append((j,i))
         arcs.extend(arcs2way) 
-    
-        self.buildModel(4,nNodes,arcs)
-        self.calcPath(7)
-        exit(1)
-        
-        # generate size of telemetry items 
+        for i in range(nNodes):   # add in arcs the fake node
+           arcs.append((i,nNodes))
+  
+        self.arcs = arcs
+
+       # generate size of telemetry items 
         sV = [random.randint(min_size,max_size) for _ in range(nV)]
         #sV = {}
         #for v in range(nV):
@@ -142,56 +87,29 @@ class NetworkGenerator:
             Rmt[m] = dependencies[1]
             
         
-        dmp ={}  # True if device d gives the package P to application m
-        for d in range(nNodes):
-            dmp[d] = {}
-            for m in range(nM):
-                dmp[d][m] = []  
-                for p in range(len(Rms[m])): 
-                   ok = True
-                   for v in range(len(Rms[m][p])):  
-                      if not(Rms[m][p][v] in Vd[d]): 
-                         ok = False
-                         break
-                   dmp[d][m].append(ok) 
+#        dmp ={}  # True if device d gives the package P to application m
+#        for d in range(nNodes):
+#            dmp[d] = {}
+#            for m in range(nM):
+#                dmp[d][m] = []  
+#                for p in range(len(Rms[m])): 
+#                   ok = True
+#                   for v in range(len(Rms[m][p])):  
+#                      if not(Rms[m][p][v] in Vd[d]): 
+#                         ok = False
+#                         break
+#                   dmp[d][m].append(ok) 
 
 
-        # Generate F flows
-        # set of given flows
-        GF = [i for i in range(int((pFlows * nFlows / 100)))] # set of given flows
-        flows_infos = {}
-        for f in range(nFlows) :
-        #for f in list(set(range(nFlows)) - set(GF)):
-            # Choose a random source and destination
-            source = random.randint(0, nNodes-1)
-            destination = random.randint(0, nNodes-1)
-            # Make sure the source and destination are not the same
-            while source == destination:
-                destination = random.randint(0, nNodes-1)
-            # Choose a random capacity for the flow
-            capacity = random.randint(2*min_size, 2*max_size)
-            #capacity = random.randrange(2,20, 2) # to compare 2 to 20
-            # Add the flow to the dictionary
-            flows_infos[f] = [source, destination, capacity]
-
-        # getting the source, destination and capacity of each flow
-        S_f = [source[0] for source in flows_infos.values()]
-        E_f = [destination[1] for destination in flows_infos.values()]
-        flowCap = [capacity[2] for capacity in flows_infos.values()]
-                
-        # getting the shortest path for each flow
+        # calculating the flows 
         flows = {}
+        flowCap= []
+        self.buildModel()
         for f in range(nFlows):
-            s = S_f[f]
-            d = E_f[f]
-            #flows[f] = nx.shortest_path(G, s,  d)
-            Nodes = [ 3, 4, 8]
-            TSP(s,3,nNodes,arcs)
-            #flows[f] = TSP(s,3,nNodes,arcs)
-            #print(flows[f])
-            print("source:",s," destination:",d)
-            exit(1)
-
+            s = random.randint(0, nNodes-1)
+            flows[f] = self.calcPath(s)
+            flowCap.append(random.randint(2*min_size, 2*max_size))
+        
         # getting the flows crossing each device
         flowsNode = defaultdict(list)
         for d in range(nNodes):
@@ -199,13 +117,9 @@ class NetworkGenerator:
                 if d in flows[f]:
                     flowsNode[d].append(f)
 
-
-
-
         #define the parameters
         self.nNodes = nNodes
         self.nFlows = nFlows
-        self.pFlows = pFlows
         self.nV = nV
         self.nM = nM
         self.min_size = min_size
@@ -216,64 +130,80 @@ class NetworkGenerator:
         self.Rmt = Rmt
         self.T = T
         self.flows = flows
-        self.S_f = S_f
-        self.E_f = E_f
-        self.flowCap = flowCap
-        self.GF = GF
+#        self.S_f = S_f
+#        self.E_f = E_f
+        self.flowCap = flowCap 
+#        self.GF = GF
         self.maxL = maxL
         self.flowsNode = flowsNode
         self.Vd = Vd
         self.isVd = isVd
-        self.dmp = dmp
+#        self.dmp = dmp
         self.arcs = arcs
         
     def calcPath(self,s : int):
-       self.z[s].lb = 1
-       self.mdl.export_as_lp("tsp.lp")
+       self.z[s].set_lb(1)
+       
+       sol = self.mdl.solve()
+       if not sol:
+         print("No feasible solution")
+         exit(1)
+       ss = s
+       path = [ss]
+       while ss != self.nNodes:
+          for (i,j) in self.arcs: 
+             if (i != ss): 
+                continue
+             if sol.get_value(self.x[i,j]) > 0.5: 
+                path.append(j)
+                ss = j
+                break
+    
+       self.mdl.add_constraint(self.mdl.sum(self.x[path[i],path[i+1]] for i in range(len(path)-1)) <= self.maxL) 
+       self.z[s].set_lb(0)
+       #self.mdl.export_as_lp('tsp.lp')
+       return path[0 : len(path)-1]
 
-    def buildModel(self, L:int, nNodes:int, arcs:list):
+    def buildModel(self):
        
        # Define model
        self.mdl = Model('PathModel')
-       
-       for i in range(nNodes):   # arcs to the fake node
-          arcs.append((i,nNodes))
-    
-       # Parameters
-       bigM = nNodes * 2  # Assuming n is defined
+
+      # Parameters
+       bigM = self.nNodes * 2  # Assuming n is defined
        
        # Variables
        self.x = {(i, j): self.mdl.integer_var(name='x_{}_{}'.format(i, j))
-            for (i, j) in arcs}
+            for (i, j) in self.arcs}
        
        self.u = {i : self.mdl.continuous_var(name='u_{}'.format(i), lb = 0, ub = bigM ) \
-       for i in range(nNodes+1)}
+       for i in range(self.nNodes+1)}
        
        self.z = {i : self.mdl.integer_var(name='z_{}'.format(i), lb = 0, ub = 1 ) \
-       for i in range(nNodes+1)}
+       for i in range(self.nNodes+1)}
        # Objective function
-       self.mdl.minimize(self.mdl.sum(self.x[i, j] for (i, j) in arcs))
+       self.mdl.minimize(self.mdl.sum(self.x[i, j] for (i, j) in self.arcs))
     
        # Constraints
-       self.mdl.add_constraint(self.mdl.sum(self.x[i,j] for (i,j) in arcs if j == nNodes ) == 1, \
+       self.mdl.add_constraint(self.mdl.sum(self.x[i,j] for (i,j) in self.arcs if j == self.nNodes ) == 1, \
        ctname='end')
       
        for ii in range(nNodes):
-          self.mdl.add_constraint(self.mdl.sum(self.x[i,j] for (i,j) in arcs if i == ii) <= 1, \
+          self.mdl.add_constraint(self.mdl.sum(self.x[i,j] for (i,j) in self.arcs if i == ii) <= 1, \
           ctname=f'suc{ii}')
        
-       for jj in range(nNodes): 
-          self.mdl.add_constraint(self.mdl.sum(self.x[i, j] for (i, j) in arcs if j == jj ) -\
-          self.mdl.sum(self.x[j,i] for (j,i) in arcs if j == jj )  == -self.z[jj], ctname='b_{}'.format(jj))
+       for jj in range(self.nNodes): 
+          self.mdl.add_constraint(self.mdl.sum(self.x[i, j] for (i, j) in self.arcs if j == jj ) -\
+          self.mdl.sum(self.x[j,i] for (j,i) in self.arcs if j == jj )  == -self.z[jj], ctname='b_{}'.format(jj))
     
-       for (ii,jj) in arcs:
-          self.mdl.add_constraint( self.mdl.sum(self.u[j] for j in range(nNodes+1) if j == jj) >= \
+       for (ii,jj) in self.arcs:
+          self.mdl.add_constraint( self.mdl.sum(self.u[j] for j in range(self.nNodes+1) if j == jj) >= \
           self.mdl.sum(self.u[i] + 1 + bigM * (self.x[i,j] - self.z[j] - 1) \
-          for (i,j) in arcs if j == jj and i == ii) , ctname=f'cycle{ii,jj}') 
+          for (i,j) in self.arcs if j == jj and i == ii) , ctname=f'cycle{ii,jj}') 
     
-       self.mdl.add_constraint(self.mdl.sum(self.x[i, j] for (i, j) in arcs ) == L+1, ctname='length')
+       self.mdl.add_constraint(self.mdl.sum(self.x[i, j] for (i, j) in self.arcs ) == self.maxL+1,\
+       ctname='length')
        
-     
     def printI(self):
         print("Number of nodes: ",self.nNodes,"\n")
         print("Flows: ",self.nFlows)
@@ -339,71 +269,40 @@ class NetworkGenerator:
                     times.append(str(tmpv))
                 f.write(str(m) + ' ' + ' '.join(times) + '\n')
 
-
             # Write Vd
             for d, v in self.Vd.items():
                 f.write(str(d) + ' ' + ' '.join(map(str, v)) + '\n')
+            
+            # maximum_length 
+            f.write(str(self.maxL)+'\n')
+            
+            # nro of arcs
+            f.write(str(len(self.arcs)) + '\n')
 
-    def save_network(self,filename):
-        with open(filename, 'w') as f:
-            # flows to compute
-            f.write(str(len(list(set(range(self.nFlows)) - set(self.GF)))) + '\n')
-            # capacity of the flows
-            for ff in list(set(range(self.nFlows)) - set(self.GF)):
-                f.write(str(self.flowCap[ff]) + ' ')
-            f.write('\n')
-            # source and destination of the flows
-            for ff in list(set(range(self.nFlows)) - set(self.GF)):
-                f.write(f"{self.S_f[ff]} {self.E_f[ff]}\n")
-            # value of maxL
-            f.write(str(self.maxL) + '\n')
-            # number of arcs in the network
-            f.write(str(2*len(self.arcs)) + '\n')
             # write arcs of the network
             for arc in self.arcs:
                 f.write(f"{arc[0]} {arc[1]}\n")
-
-
-
-            
-
-
-    
 
 
 if __name__ == "__main__":
 
     nNodes = int(sys.argv[1])
     nFlows = int(sys.argv[2])
-    pFlows = int(sys.argv[3])  # percentage of given flows. 
-    maxL = int(sys.argv[4])
-    nV = int(sys.argv[5])
-    nM = int(sys.argv[6])
-    min_size= int(sys.argv[7])
-    max_size= int(sys.argv[8])
+    maxL = int(sys.argv[3])
+    nV = int(sys.argv[4])
+    nM = int(sys.argv[5])
+    min_size= int(sys.argv[6])
+    max_size= int(sys.argv[7])
     
-    inst = NetworkGenerator(nNodes, nFlows, pFlows, maxL, nV, nM, min_size, max_size)
+    inst = NetworkGenerator(nNodes, nFlows, maxL, nV, nM, min_size, max_size)
     inst.printI()
     
 
     # Create a folder to store the instances if it does not exist
-    Path_To_Save_Insatnces = "./instances/" + str(inst.nNodes) + "_" + str(inst.nFlows) + "_" + str(inst.nV) + "_" + str(inst.nM) +"_"+str(inst.min_size) + "_" + str(inst.max_size)
-    if not os.path.exists(Path_To_Save_Insatnces):
-        os.makedirs(Path_To_Save_Insatnces)
+    Path_To_Save_Instances = "./instances/" 
+    if not os.path.exists(Path_To_Save_Instances):
+        os.makedirs(Path_To_Save_Instances)
 
-    inst.save_to_file(Path_To_Save_Insatnces + "/" + "instance_" + str(nNodes) + "_" + str(nFlows) + "_" + str(nV) + "_" + str(nM) )
-    inst.save_network(Path_To_Save_Insatnces + "/" + "instance_network_" + str(nNodes) + "_" + str(nFlows) + "_" + str(pFlows) + "_" + str(maxL) + "_" + str(nV) + "_" + str(nM) )
-    #print(inst.Rms)
-    #print(inst.R_m)
-    #print(inst.flowCap)
-    #print(inst.flows)
-    #print(inst.sV)
-    print(inst.GF)
-
-        
-            
-            
-        
-        
- 
-        
+    inst.save_to_file(Path_To_Save_Instances + "/" + "instance_" + str(nNodes) + "_" + str(nFlows) + "_"\
+    +str(maxL)+"_"+ str(nV) + "_" + str(nM)+"_"+str(min_size)+"_"+str(max_size) )
+       
