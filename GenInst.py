@@ -10,6 +10,8 @@ from random import randint
 seed = 2023
 random.seed(seed)
 
+ 
+
 def TSP(s : int , L: int,nNodes:int, arcs:list):
    
    # Define model
@@ -33,12 +35,9 @@ def TSP(s : int , L: int,nNodes:int, arcs:list):
    mdl.add_constraint(mdl.sum(x[i,j] for (i,j) in arcs if j == nNodes ) == 1, ctname='end')
   
    # Constraints
-   for jj in range(nNodes):
-      mdl.add_constraint(mdl.sum(x[i,j] for (i,j) in arcs if j == jj) <= 1, ctname=f'suc{jj}')
+   for ii in range(nNodes):
+      mdl.add_constraint(mdl.sum(x[i,j] for (i,j) in arcs if i == ii) <= 1, ctname=f'suc{ii}')
    
-   for jj in range(nNodes):
-      mdl.add_constraint(mdl.sum(x[i,j] for (i,j) in arcs if j == jj) <= 1, ctname=f'suc{jj}')
-  
    for jj in range(nNodes): 
       if  jj == s:
          continue 
@@ -108,6 +107,10 @@ class NetworkGenerator:
         for (i,j) in arcs:
            arcs2way.append((j,i))
         arcs.extend(arcs2way) 
+    
+        self.buildModel(4,nNodes,arcs)
+        self.calcPath(7)
+        exit(1)
         
         # generate size of telemetry items 
         sV = [random.randint(min_size,max_size) for _ in range(nV)]
@@ -224,32 +227,77 @@ class NetworkGenerator:
         self.dmp = dmp
         self.arcs = arcs
         
+    def calcPath(self,s : int):
+       self.z[s].lb = 1
+       self.mdl.export_as_lp("tsp.lp")
 
-
-    def printI(self):
-       print("Number of nodes: ",self.nNodes,"\n")
-       print("Flows: ",self.nFlows)
-       print("Flow capacity: ",self.flowCap)
-       for f in range(self.nFlows): 
-          print("Flow ",f,self.flows[f])
-       print("\nNumber of Items: ",self.nV)
-       print("Items size: ",self.sV)
-       print("\nNumber of applications: ",self.nM)
-       print("Rms : ")
-       for m in range(self.nM): 
-          print("Application",m,self.Rms[m])  
-
-       print("Rmt :")
-       for m in range(self.nM): 
-          print("Application",m,self.Rmt[m])  
-
-       print("\nVd :")
-       for d in range(self.nNodes): 
-          print("Node",d,self.Vd[d])  
+    def buildModel(self, L:int, nNodes:int, arcs:list):
        
-       for d in range(self.nNodes): 
-          print("Paths crossing node",d,":",self.flowsNode[d])
-
+       # Define model
+       self.mdl = Model('PathModel')
+       
+       for i in range(nNodes):   # arcs to the fake node
+          arcs.append((i,nNodes))
+    
+       # Parameters
+       bigM = nNodes * 2  # Assuming n is defined
+       
+       # Variables
+       self.x = {(i, j): self.mdl.integer_var(name='x_{}_{}'.format(i, j))
+            for (i, j) in arcs}
+       
+       self.u = {i : self.mdl.continuous_var(name='u_{}'.format(i), lb = 0, ub = bigM ) \
+       for i in range(nNodes+1)}
+       
+       self.z = {i : self.mdl.integer_var(name='z_{}'.format(i), lb = 0, ub = 1 ) \
+       for i in range(nNodes+1)}
+       # Objective function
+       self.mdl.minimize(self.mdl.sum(self.x[i, j] for (i, j) in arcs))
+    
+       # Constraints
+       self.mdl.add_constraint(self.mdl.sum(self.x[i,j] for (i,j) in arcs if j == nNodes ) == 1, \
+       ctname='end')
+      
+       for ii in range(nNodes):
+          self.mdl.add_constraint(self.mdl.sum(self.x[i,j] for (i,j) in arcs if i == ii) <= 1, \
+          ctname=f'suc{ii}')
+       
+       for jj in range(nNodes): 
+          self.mdl.add_constraint(self.mdl.sum(self.x[i, j] for (i, j) in arcs if j == jj ) -\
+          self.mdl.sum(self.x[j,i] for (j,i) in arcs if j == jj )  == -self.z[jj], ctname='b_{}'.format(jj))
+    
+       for (ii,jj) in arcs:
+          self.mdl.add_constraint( self.mdl.sum(self.u[j] for j in range(nNodes+1) if j == jj) >= \
+          self.mdl.sum(self.u[i] + 1 + bigM * (self.x[i,j] - self.z[j] - 1) \
+          for (i,j) in arcs if j == jj and i == ii) , ctname=f'cycle{ii,jj}') 
+    
+       self.mdl.add_constraint(self.mdl.sum(self.x[i, j] for (i, j) in arcs ) == L+1, ctname='length')
+       
+     
+    def printI(self):
+        print("Number of nodes: ",self.nNodes,"\n")
+        print("Flows: ",self.nFlows)
+        print("Flow capacity: ",self.flowCap)
+        for f in range(self.nFlows): 
+           print("Flow ",f,self.flows[f])
+        print("\nNumber of Items: ",self.nV)
+        print("Items size: ",self.sV)
+        print("\nNumber of applications: ",self.nM)
+        print("Rms : ")
+        for m in range(self.nM): 
+           print("Application",m,self.Rms[m])  
+    
+        print("Rmt :")
+        for m in range(self.nM): 
+           print("Application",m,self.Rmt[m])  
+    
+        print("\nVd :")
+        for d in range(self.nNodes): 
+           print("Node",d,self.Vd[d])  
+        
+        for d in range(self.nNodes): 
+           print("Paths crossing node",d,":",self.flowsNode[d])
+    
     def save_to_file(self, filename):
         with open(filename, 'w') as f:
             # nNodes
