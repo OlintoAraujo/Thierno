@@ -10,63 +10,63 @@ from random import randint
 seed = 2023
 random.seed(seed)
 
-def TSP(s : int , d : int, Nodes: list,nNodes:int, arcs:list):
+def TSP(s : int , L: int,nNodes:int, arcs:list):
    
    # Define model
    mdl = Model('PathModel')
    
+   for i in range(nNodes):   # arcs to the fake node
+      arcs.append((i,nNodes))
+
    # Parameters
    bigM = nNodes * 2  # Assuming n is defined
    
    # Variables
-   x = {(i, j): mdl.integer_var(name='x_{}_{}'.format(i, j), lb=0, ub=(0 if i == d else 1))
+   x = {(i, j): mdl.integer_var(name='x_{}_{}'.format(i, j))
         for (i, j) in arcs}
-   y = {(i, j): mdl.continuous_var(name='y_{}_{}'.format(i, j), lb=0) for (i, j) in arcs}
    
+   u = {i : mdl.continuous_var(name='u_{}'.format(i), lb = 0, ub = bigM*(i != s) ) for i in range(nNodes+1)}
    # Objective function
    mdl.minimize(mdl.sum(x[i, j] for (i, j) in arcs))
-   
+
+   mdl.add_constraint(mdl.sum(x[i,j] for (i,j) in arcs if i == s ) == 1, ctname='start')
+   mdl.add_constraint(mdl.sum(x[i,j] for (i,j) in arcs if j == nNodes ) == 1, ctname='end')
+  
    # Constraints
-   mdl.add_constraint(mdl.sum(x[i,j] for (i,j) in arcs if i == s ) == 1, ctname='c0')
-   mdl.add_constraint(mdl.sum(x[i,j] for (i,j) in arcs if j == d ) == 1, ctname='c1')
+   for jj in range(nNodes):
+      mdl.add_constraint(mdl.sum(x[i,j] for (i,j) in arcs if j == jj) <= 1, ctname=f'suc{jj}')
    
-   for ii in range(nNodes):
-       mdl.add_constraint(mdl.sum(x[i, j] for (i,j) in arcs if i == ii) <= 1, ctname='c30_{}'.format(ii))
-   
+   for jj in range(nNodes):
+      mdl.add_constraint(mdl.sum(x[i,j] for (i,j) in arcs if j == jj) <= 1, ctname=f'suc{jj}')
+  
    for jj in range(nNodes): 
-      if ( jj == s or jj == d):
+      if  jj == s:
          continue 
-      mdl.add_constraint(mdl.sum(x[i, j] - x[j, i] for (i, j) in arcs if j == jj ) == 0, ctname='c31_{}'.format(jj))
+      mdl.add_constraint(mdl.sum(x[i, j] for (i, j) in arcs if j == jj ) -\
+      mdl.sum(x[j,i] for (j,i) in arcs if j == jj )  == 0, ctname='b_{}'.format(jj))
+
+   for (ii,jj) in arcs:
+      if  jj == s : 
+         continue
+      mdl.add_constraint( mdl.sum(u[j] for j in range(nNodes+1) if j == jj) >= \
+      mdl.sum(u[i] + 1 + bigM * (x[i,j] - 1) for (i,j) in arcs if j == jj and i == ii) , ctname=f'cycle{ii,jj}') 
+
+   mdl.add_constraint(mdl.sum(x[i, j] for (i, j) in arcs ) == L+1, ctname='length')
    
-   mdl.add_constraint(mdl.sum(y[i, j] for (i,j) in arcs if i == s) == len(Nodes), ctname='d01_yNodeS1')
-   
-   for (i, j) in arcs:
-      mdl.add_constraint(y[i,j] <= bigM * x[i,j], ctname='d1_{}_{}'.format(i,j) )
-   
-   for jj in range(nNodes) : 
-      if (jj in Nodes) or jj == s or jj == d: 
-         continue   
-      mdl.add_constraint(mdl.sum(y[i, j] for (i, j) in arcs if j == jj) - \
-      mdl.sum(y[j,i] for (j,i) in arcs if j == jj )== 0, ctname='d3_{}'.format(jj))
-   
-   for jj in Nodes:
-       mdl.add_constraint(mdl.sum(y[i,j] for (i,j) in arcs if j == jj) \
-       - mdl.sum(y[j, i] for (j, i) in arcs if j == jj) == -1, ctname='d4_{}'.format(jj))
-         
    mdl.export_as_lp("tsp.lp")
    
-   sol = mdl.solve()
-   path = [s]
-   while s != d:
-      for (i,j) in arcs: 
-         if (i != s): 
-            continue
-         if sol.get_value(x[i,j]) > 0.5: 
-            path.append(j)
-            s = j
-            break
-
-   return path
+#   sol = mdl.solve()
+#   path = [s]
+#   while s != d:
+#      for (i,j) in arcs: 
+#         if (i != s): 
+#            continue
+#         if sol.get_value(x[i,j]) > 0.5: 
+#            path.append(j)
+#            s = j
+#            break
+#
+#   return path
 
 def spatial_dependency(nV,nM,T):
     list_items = list(range(nV))
@@ -183,8 +183,9 @@ class NetworkGenerator:
             d = E_f[f]
             #flows[f] = nx.shortest_path(G, s,  d)
             Nodes = [ 3, 4, 8]
-            flows[f] = TSP(s,d,Nodes,nNodes,arcs)
-            print(flows[f])
+            TSP(s,3,nNodes,arcs)
+            #flows[f] = TSP(s,3,nNodes,arcs)
+            #print(flows[f])
             print("source:",s," destination:",d)
             exit(1)
 
