@@ -44,7 +44,7 @@ class NetworkGenerator:
         self.nNodes = nNodes
         self.maxL = maxL
         # generate the network infrastructure
-        G = nx.barabasi_albert_graph(nNodes, 2)
+        G = nx.barabasi_albert_graph(nNodes, 3)
         
         # arcs of the network
         arcs = list(G.edges)
@@ -108,7 +108,7 @@ class NetworkGenerator:
         for f in range(nFlows):
             s = random.randint(0, nNodes-1)
             flows[f] = self.calcPath(s)
-            flowCap.append(random.randint(2*min_size, 2*max_size))
+            flowCap.append(random.randint(2*min_size, 4*max_size))
         
         # getting the flows crossing each device
         flowsNode = defaultdict(list)
