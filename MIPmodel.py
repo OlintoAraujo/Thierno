@@ -148,6 +148,8 @@ class MIPmodel:
               lb=0,ub= self.inst.flowCap[f] * (self.inst.arcs[k][0] != endNode[f]) ) \
               for k in range(self.inst.nArcs) for f in cFlows}
           
+         r = {(i,f): self.mdlE.integer_var(name='r_{}_{}'.format(i,f),lb = 0, ub = self.inst.flowCap[f]) for f in cFlows\
+         for i in range(self.inst.nNodes) if i == endNode[f] }
          #z = {(f): self.mdlE.binary_var(name='z_{}'.format(f)) for f in cFlows}
 
          # add constraints
@@ -182,35 +184,28 @@ class MIPmodel:
                for k in range(self.inst.nArcs) if self.inst.arcs[k][0] == d) == 0\
                ,ctname=f'cX_{d,f}')
          
-         # Link between network x and network x2
-         bigM = 0
-         for v in range(self.inst.nV):
-            bigM = bigM + self.inst.sV[v]
-         bigM = bigM * 2   
-
          for f in cFlows:
             for k in range(self.inst.nArcs):
                self.mdlE.add_constraint(x2e[self.inst.arcs[k][0], self.inst.arcs[k][1],f] <= \
-               bigM*xe[self.inst.arcs[k][0], self.inst.arcs[k][1],f], \
+               self.inst.flowCap[f]*xe[self.inst.arcs[k][0], self.inst.arcs[k][1],f], \
                ctname=f'x_x2{self.inst.arcs[k][0],self.inst.arcs[k][1],f}')
 
          for d in range(self.inst.nNodes):
             for f in cFlows:   
-               if d == endNode[f]: 
-                  continue
-               self.mdlE.add_constraint(self.mdlE.sum(x2e[self.inst.arcs[k][0],d,f]\
-               for k in range(self.inst.nArcs) if self.inst.arcs[k][1] == d) - \
-               self.mdlE.sum(x2e[d, self.inst.arcs[k][1],f] \
-               for k in range(self.inst.nArcs) if self.inst.arcs[k][0] == d) == \
-               -self.mdlE.sum(self.inst.sV[v]*self.ye[d,v,f] for v in self.inst.Vd[d]),ctname=f'cX2_{d,f}')
-        
-         for f in cFlows:   
-            self.mdlE.add_constraint(self.mdlE.sum(x2e[self.inst.arcs[k][0],endNode[f],f]\
-            for k in range(self.inst.nArcs) if self.inst.arcs[k][1] == endNode[f]) == \
-            self.mdlE.sum(self.inst.sV[v]*self.ye[d,v,f] for d in range(self.inst.nNodes) \
-            for v in self.inst.Vd[d]),ctname=f'Fn_{endNode[f],f}')
-        
-         # a single telemetry item should be a collected by a single (any) flow
+               if d == endNode[f]:
+                  self.mdlE.add_constraint(self.mdlE.sum(x2e[self.inst.arcs[k][0],d,f]\
+                  for k in range(self.inst.nArcs) if self.inst.arcs[k][1] == d) - \
+                  self.mdlE.sum(x2e[d, self.inst.arcs[k][1],f] \
+                  for k in range(self.inst.nArcs) if self.inst.arcs[k][0] == d) -  r[endNode[f],f] == \
+                  -self.mdlE.sum(self.inst.sV[v]*self.ye[d,v,f] for v in self.inst.Vd[d]),ctname=f'cX2_{d,f}')
+               else:   
+                  self.mdlE.add_constraint(self.mdlE.sum(x2e[self.inst.arcs[k][0],d,f]\
+                  for k in range(self.inst.nArcs) if self.inst.arcs[k][1] == d) - \
+                  self.mdlE.sum(x2e[d, self.inst.arcs[k][1],f] \
+                  for k in range(self.inst.nArcs) if self.inst.arcs[k][0] == d) == \
+                  -self.mdlE.sum(self.inst.sV[v]*self.ye[d,v,f] for v in self.inst.Vd[d]),ctname=f'cX2_{d,f}')
+         
+        # a single telemetry item should be a collected by a single (any) flow
          for d in range(self.inst.nNodes):
             for v in self.inst.Vd[d]:
                self.mdlE.add_constraint(self.mdlE.sum(self.ye[d, v, f] for f in range(self.inst.nFlows)) <=1, \
@@ -376,14 +371,15 @@ class MIPmodel:
 #            self.mdlE0.add_constraint(self.mdlE0.sum(self.inst.sV[v] * self.ye0[d, v, f] for d in range(self.inst.nNodes) \
 #            for v in self.inst.Vd[d]) <=  self.inst.flowCap[f])
 
+         # counting spatial dependencies
          for m in range(self.inst.nM):
             for d in range(self.inst.nNodes):
                   for p in range(len(self.inst.Rms[m])):
                      if self.inst.dmp[d][m][p]:
                        self.mdlE0.add_constraint(se0[m,d,p] == self.mdlE0.sum(self.ye0[d, v, f] \
-                              for v in self.inst.Vd[d] \
-                              for f in range(self.inst.nFlows)))
-
+                       for v in self.inst.Rms[m][p] if v in self.inst.Vd[d]\
+                       for f in range(self.inst.nFlows) if ((f in cFlows) or (d in self.inst.flows[f])) ),ctname=f'smdp0{m,d,p}')
+ 
          for m in range(self.inst.nM):
             for d in range(self.inst.nNodes):
                   for p in range(len(self.inst.Rms[m])):
@@ -564,41 +560,4 @@ class MIPmodel:
                         solu.fo = solu.fo + 1
                         solu.collectedRt[m][p] = True
       
-#================================================
-#teste.active = False
-#teste.lhs=d=teste.lhs-self.y[0,0,0]+2*self.y[0,0,0] 
-# teste.rhs = 100
-#self.mdl.remove_constraint(teste)
-#      yd = sol.get_value_dict(self.y, keep_zeros=False)
-#      xd = sol.get_value_dict(self.y, keep_zeros=False)
-
-#      chaves_valor_1 = [chave for chave, valor in xd.items() if valor == 1]
-
-#      print(chaves_valor_1)
-#      print(chaves_valor_1[0][0])
-#      print(sol.objective_value)
-#      self.export_lp('basicModel.lp')
-#      sol2 = self.mdl.solve()
-#      print("Local Search Phase 2: ",sol2.objective_value)
-
-
-      # update solution
-
-#      Rms ={}
-#      for m in range(self.inst.nM):
-#         Rms[m] = [0] * len(self.inst.Rms[m])
-#         for p in range(len(self.inst.Rms[m])):
-#            
-#            for v in self.inst.Rms[m][p]:
-#               if not solu.collectedItems[v] : 
-#                  Rms[m][p] = Rms[m][p] + 1
-#            
-#            for d in range(self.inst.nNodes):
-#               if self.inst.dmp[d][m][p]:
-#                  if sol1.get_value(self.sb[m,d,p])<= 0.5 :
-#                     if len(self.inst.Rms[m][p]) > 2 and Rms[m][p] >= len(self.inst.Rms[m][p])-1:
-#                        self.sb[m,d,p].ub = 0
-#                  else:      
-#                        self.sb[m,d,p].lb = 1 
-#
 
