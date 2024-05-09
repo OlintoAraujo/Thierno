@@ -66,7 +66,7 @@ class NetworkGenerator:
         # generate a subset of telemetry items for each device
         Vd = {}
         for d in range(nNodes):
-            Vd[d] = random.sample(range(nV), random.randint(2, nV))
+            Vd[d] = random.sample(range(nV), random.randint(2,int(nV/2)))
             Vd[d].sort(reverse=False)
 
         isVd ={} # is item v provided by d ?  T or F
@@ -108,7 +108,7 @@ class NetworkGenerator:
         for f in range(nFlows):
             s = random.randint(0, nNodes-1)
             flows[f] = self.calcPath(s)
-            flowCap.append(random.randint(2*min_size, 4*max_size))
+            flowCap.append(random.randint(min_size, max_size))
         
         # getting the flows crossing each device
         flowsNode = defaultdict(list)
@@ -275,7 +275,8 @@ class NetworkGenerator:
             
             # maximum_length 
             f.write(str(self.maxL)+'\n')
-            
+
+            self.arcs = [tupla for tupla in self.arcs if tupla[1] != self.nNodes]
             # nro of arcs
             f.write(str(len(self.arcs)) + '\n')
 

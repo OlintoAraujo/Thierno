@@ -148,7 +148,7 @@ class MIPmodel:
               lb=0,ub= self.inst.flowCap[f] * (self.inst.arcs[k][0] != endNode[f]) ) \
               for k in range(self.inst.nArcs) for f in cFlows}
           
-         z = {(f): self.mdlE.binary_var(name='z_{}'.format(f)) for f in cFlows}
+         #z = {(f): self.mdlE.binary_var(name='z_{}'.format(f)) for f in cFlows}
 
          # add constraints
          for f in cFlows:
@@ -186,7 +186,7 @@ class MIPmodel:
          bigM = 0
          for v in range(self.inst.nV):
             bigM = bigM + self.inst.sV[v]
-         bigM = bigM * self.inst.nNodes   
+         bigM = bigM * 2   
 
          for f in cFlows:
             for k in range(self.inst.nArcs):
@@ -219,8 +219,7 @@ class MIPmodel:
          # capacity constraint to the given flows
          for f in gFlows:
             self.mdlE.add_constraint(self.mdlE.sum(self.inst.sV[v]*self.ye[d, v, f] \
-            for d in self.inst.flows[f]  for v in self.inst.Vd[d]) <=\
-            self.inst.flowCap[f],ctname=f'cGF_{f}')
+            for d in self.inst.flows[f]  for v in self.inst.Vd[d]) <= self.inst.flowCap[f],ctname=f'cGF_{f}')
          
          # counting spatial dependencies
          for m in range(self.inst.nM):
@@ -229,7 +228,7 @@ class MIPmodel:
                   if self.inst.dmp[d][m][p]: # True if device d gives the package P to appliation m
                      self.mdlE.add_constraint(se[m,d,p] == self.mdlE.sum(self.ye[d, v, f] \
                      for v in self.inst.Rms[m][p] if v in self.inst.Vd[d]\
-                     for f in range(self.inst.nFlows) if d in self.inst.flows[f] ),ctname=f'smdp{m,d,p}')
+                     for f in range(self.inst.nFlows) if ((f in cFlows) or (d in self.inst.flows[f])) ),ctname=f'smdp{m,d,p}')
    
          # spatial dependencies
          for m in range(self.inst.nM):
@@ -246,7 +245,7 @@ class MIPmodel:
                   for v in self.inst.Rms[m][p]:
                      self.mdlE.add_constraint(we[m, p, v] <= self.mdlE.sum(self.ye[d, v, f] \
                      for d in range(self.inst.nNodes) if self.inst.dmp[d][m][p] \
-                     for f in range(self.inst.nFlows)),ctname=f'w{m,p,v}')   
+                     for f in range(self.inst.nFlows) if ((f in cFlows) or (d in self.inst.flows[f]))),ctname=f'w{m,p,v}')   
     
          # counting temporal 2
          for m in range(self.inst.nM):
@@ -300,8 +299,9 @@ class MIPmodel:
                   lb =0,ub = int(self.inst.arcs[k][0] != endNode[f])) \
                   for k in range(self.inst.nArcs) for f in cFlows}
 
-         gg = {(i,f): self.mdlE0.continuous_var(name='gg_{}_{}'.format(i,f)) for i in range(self.inst.nNodes) \
-            for f in range(self.inst.nFlows)}
+         gg = {(i,f): self.mdlE0.continuous_var(name='gg_{}_{}'.format(i,f),lb = 0, ub = 2*self.inst.nNodes * (i!=startNode[f])) \
+         for i in range(self.inst.nNodes) for f in cFlows}
+
          se0 = {(m,d,p): self.mdlE0.integer_var(name='se0_{}_{}_{}'.format(m,d,p)) for m in range(self.inst.nM) \
             for d in range(self.inst.nNodes) for p in range(len(self.inst.Rms[m])) if self.inst.dmp[d][m][p]}
          te0 = {(m,p): self.mdlE0.integer_var(name='te0_{}_{}'.format(m,p)) for m in range(self.inst.nM) \
@@ -311,7 +311,7 @@ class MIPmodel:
             for p in range(len(self.inst.Rms[m])) if self.inst.Rmt[m][p] \
             for v in self.inst.Rms[m][p] }
 
-         ze0 = {(f): self.mdlE0.binary_var(name='ze0_{}'.format(f)) for f in cFlows}
+         #ze0 = {(f): self.mdlE0.binary_var(name='ze0_{}'.format(f)) for f in cFlows}
 
          # constraints
          for f in cFlows:
@@ -335,17 +335,20 @@ class MIPmodel:
 
          for i in range(self.inst.nNodes):
             for j in range(self.inst.nNodes):
-                  for f in cFlows:
-                     if (i,j) in self.inst.arcs:
-                        self.mdlE0.add_constraint(self.xe0[i,j,f] + self.xe0[j,i,f] <= 1)
+               for f in cFlows:
+                  if (i,j) in self.inst.arcs:
+                     self.mdlE0.add_constraint(self.xe0[i,j,f] + self.xe0[j,i,f] <= 1)
 
 
-         for i in range(self.inst.nNodes):
-            for j in range(self.inst.nNodes):
-                  for f in range(self.inst.nFlows):
-                     if (i,j) in self.inst.arcs:
-                        self.mdlE0.add_constraint(gg[j,f] >= gg[i,f] + 1 - len(range(self.inst.nNodes))*(1-self.xe0[i,j,f]))
-
+         for k in range(self.inst.nArcs):
+            for f in cFlows:
+               i = self.inst.arcs[k][0]
+               j = self.inst.arcs[k][1]
+               if j == startNode[f]:
+                  continue
+               self.mdlE0.add_constraint(gg[j,f] >= gg[i,f] + 1 - 2*len(range(self.inst.nNodes))*(1-self.xe0[i,j,f]),\
+               ctname=f'subC{i,j,f}')
+         
          for f in cFlows:
             self.mdlE0.add_constraint(self.mdlE0.sum(self.xe0[self.inst.arcs[k][0], self.inst.arcs[k][1],f] \
                   for k in self.inst.arcs) <= self.inst.maxL ,ctname=f'L{f}')
@@ -385,7 +388,7 @@ class MIPmodel:
             for d in range(self.inst.nNodes):
                   for p in range(len(self.inst.Rms[m])):
                      if self.inst.dmp[d][m][p]:
-                        self.mdlE0.add_constraint(self.sbe0[m,d,p] <= se0[m,d,p]/len(self.inst.Rms[m][p]))
+                        self.mdlE0.add_constraint(len(self.inst.Rms[m][p])*self.sbe0[m,d,p] <= se0[m,d,p],ctname=f'seb0{m,d,p}')
 
          # couting temporal 1
          for m in range(self.inst.nM):
@@ -394,8 +397,8 @@ class MIPmodel:
                   for v in self.inst.Rms[m][p]:
                      self.mdlE0.add_constraint(we0[m, p, v] <= self.mdlE0.sum(self.ye0[d, v, f] \
                      for d in range(self.inst.nNodes) if self.inst.dmp[d][m][p] \
-                     for f in self.inst.flowsNode[d]),ctname=f'we0{m,p,v}')   
-    
+                     for f in range(self.inst.nFlows) if ((f in cFlows) or (d in self.inst.flows[f]))),ctname=f'w0{m,p,v}')   
+  
          # counting temporal 2
          for m in range(self.inst.nM):
             for p in range(len(self.inst.Rms[m])):

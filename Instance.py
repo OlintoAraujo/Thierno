@@ -94,7 +94,7 @@ class Instance:
           self.nArcs = int(file.readline())
           for a in range(self.nArcs):
              line = file.readline().strip().split()
-             self.arcs[a] = [ int(line[0]), int(line[1])]    
+             self.arcs[a] = ( int(line[0]), int(line[1]))    
     
 
     def printI(self):
