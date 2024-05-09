@@ -23,22 +23,32 @@ class Solution:
 
      self.collectedRt ={}
      for m in range(self.inst.nM):
-        self.collectedRt[m] = [False] * len(self.inst.Rms[m])  
+        self.collectedRt[m] = [0] * len(self.inst.Rms[m])  
 
    
-   def addP(self, typeP : int, m : int, p : int, flows : list):# typeP :  0 Rms or Rmt (need to check);   1 Rmt (only)
+   def addP(self,  m : int, p : int, flows : list): 
       ok = False
-      if typeP == 0 : 
+
+      devices = []
+      for i in range(len(flows)):   # verify if Item came from the same device
+         if not flows[i][2] in devices:
+            devices.append(flows[i][2])
+      
+      if len(devices) == 1 : 
          ok = True
          self.fo = self.fo + 1 
          self.smdp = self.smdp + 1
          self.collectedRm[m][p] = self.collectedRm[m][p] + 1 
-    
-      if self.inst.Rmt[m][p] and not(self.collectedRt[m][p]):
-         ok = True
-         self.collectedRt[m][p] = True
-         self.fo = self.fo+1
-         self.tmp = self.tmp + 1
+         if self.inst.Rmt[m][p]:
+            self.tmp = self.tmp + 1
+            self.fo = self.fo + 1 
+            self.collectedRt[m][p] = self.collectedRt[m][p] + 1
+      else:    
+         if self.inst.Rmt[m][p]:
+            ok = True
+            self.fo = self.fo + 1 
+            self.collectedRt[m][p] = self.collectedRt[m][p] + 1
+            self.tmp = self.tmp + 1
 
       if ok : 
          for i in range(len(flows)): 
@@ -66,7 +76,7 @@ class Solution:
          self.collectedRm[m] = [0] * len(self.inst.Rms[m])  
 
       for m in range(self.inst.nM):
-         self.collectedRt[m] = [False] * len(self.inst.Rms[m])  
+         self.collectedRt[m] = [0] * len(self.inst.Rms[m])  
 
   
    def printS(self):

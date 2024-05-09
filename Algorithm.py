@@ -49,7 +49,7 @@ class Algorithm:
                    if not ok : 
                       break
              if dmp == len(self.inst.Rms[m][p]): 
-                solu.addP(0,m,p,flowsV)
+                solu.addP(m,p,flowsV)
              else:
                 for i in range(len(flowsV)): # restore the flow cap because it was not possible to collect P
                    v = flowsV[i][0]  
@@ -78,7 +78,7 @@ class Algorithm:
                     if ok : 
                        break
               if dmp == len(self.inst.Rms[m][p]): 
-                 solu.addP(1,m,p,flowsV)
+                 solu.addP(m,p,flowsV)
               else:
                  for i in range(len(flowsV)): # restore the flow cap because it was not possible to collect P
                     v = flowsV[i][0]  

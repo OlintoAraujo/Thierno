@@ -5,23 +5,45 @@ import random
 import networkx as nx
 from collections import defaultdict
 from random import randint
+from itertools import chain, combinations, permutations
 
 
 seed = 2023
 random.seed(seed)
 
-def spatial_dependency(nV,nM,T):
+
+def spatial_dependency_E(nV,T):
     list_items = list(range(nV))
     num_spatials = random.randint(2,nV/2)
-    spatials_max_length = random.randint(2,4)
-    #spatials_max_length = int(nV/nM)
+    spatials_max_length = random.randint(2,8)
+    spatials = []
+    remaining_spatials = list_items.copy()
+    for _ in range(num_spatials):
+        spatial_length = random.randint(2, spatials_max_length)
+        spatial = random.sample(remaining_spatials, spatial_length)
+        spatials.append(spatial)
+    #print(spatials)
+    spatials_dict = {}
+    temporals_dict = {}
+    for l in range(len(spatials)):
+        spatials_dict[l] = spatials[l]
+        temporals_dict[l] = random.randint(T/2, 2*T)
+    #print(spatials_dict)
+    dependencies = [spatials_dict, temporals_dict]
+    return dependencies
+
+def spatial_dependency_H(nV,nM,T):
+    list_items = list(range(nV))
+    num_spatials = random.randint(2,nV/2)
+    #spatials_max_length = random.randint(2,nV/2)
+    spatials_max_length = int(nV/nM)
     spatials = []
     remaining_spatials = list_items.copy()
     for _ in range(num_spatials):
         if not remaining_spatials:
             break
-        spatial_length = random.randint(2, spatials_max_length)
-        #spatial_length = int(nV/nM)
+        #spatial_length = random.randint(2, spatials_max_length)
+        spatial_length = int(nV/nM)
         spatial_length = min(spatial_length, len(remaining_spatials))
         spatial = random.sample(remaining_spatials, spatial_length)
         spatials.append(spatial)
@@ -35,8 +57,6 @@ def spatial_dependency(nV,nM,T):
     #print(spatials_dict)
     dependencies = [spatials_dict, temporals_dict]
     return dependencies
-
-
 
 class NetworkGenerator:
     def __init__(self, nNodes: int, nFlows: int, maxL: int, nV: int, nM: int, min_size: int, max_size: int):
@@ -81,10 +101,13 @@ class NetworkGenerator:
         Rms = {}
         Rmt = {}
         for m in range(nM):
-            dependencies = spatial_dependency(nV,nM,T)
+            dependencies = spatial_dependency_E(nV,T)
             #Rms[m] = spatial_dependency(nV,T)
             Rms[m] = dependencies[0]
             Rmt[m] = dependencies[1]
+
+        #print("RrrrrrrrrrrrrrrrMs : ", Rms)
+        #exit(1)
             
         
 #        dmp ={}  # True if device d gives the package P to application m
@@ -108,7 +131,7 @@ class NetworkGenerator:
         for f in range(nFlows):
             s = random.randint(0, nNodes-1)
             flows[f] = self.calcPath(s)
-            flowCap.append(random.randint(min_size, 2*max_size))
+            flowCap.append(random.randint(2*min_size, 2*max_size))
         
         # getting the flows crossing each device
         flowsNode = defaultdict(list)
@@ -300,10 +323,9 @@ if __name__ == "__main__":
     
 
     # Create a folder to store the instances if it does not exist
-    Path_To_Save_Instances = "./instances/" 
+    Path_To_Save_Instances = "./instances/"  
     if not os.path.exists(Path_To_Save_Instances):
         os.makedirs(Path_To_Save_Instances)
 
-    inst.save_to_file(Path_To_Save_Instances + "/" + "instance_" + str(nNodes) + "_" + str(nFlows) + "_"\
+    inst.save_to_file(Path_To_Save_Instances + "/" + "E_instance_" + str(nNodes) + "_" + str(nFlows) + "_"\
     +str(maxL)+"_"+ str(nV) + "_" + str(nM)+"_"+str(min_size)+"_"+str(max_size) )
-       
