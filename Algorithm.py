@@ -56,7 +56,7 @@ class Algorithm:
                    f = flowsV[i][1]
                    flowCap[f] = flowCap[f] + self.inst.sV[v]
 
-          if self.inst.Rmt[m][p] and not solu.collectedRt[m][p]: # try to collect a temporal dependence package P
+          if self.inst.Rmt[m][p] : # try to collect a temporal dependence package P
               flowsV = []
               dmp = 0  # number of collected items from device d
               for v in self.inst.Rms[m][p]:
@@ -77,7 +77,13 @@ class Algorithm:
                              break
                     if ok : 
                        break
-              if dmp == len(self.inst.Rms[m][p]): 
+             
+              devices = []
+              for i in range(len(flowsV)):   # verify if Item came from the same device
+                 if not flowsV[i][2] in devices:
+                    devices.append(flowsV[i][2])
+              
+              if len(devices)> 1 and dmp == len(self.inst.Rms[m][p]): 
                  solu.addP(m,p,flowsV)
               else:
                  for i in range(len(flowsV)): # restore the flow cap because it was not possible to collect P

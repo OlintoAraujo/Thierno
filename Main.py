@@ -1,6 +1,7 @@
 import sys
 import random
 import docplex
+import time
 from Algorithm import *
 from Instance import *
 from Solution import *
@@ -42,6 +43,11 @@ if __name__ == "__main__":
    mip = MIPmodel(inst,GF)
 #   mip.MIPls(solu,5,2)
 #   print("\nAfter MIP Local Search, Objective Function Value:",solu.fo)
-
-   grasp = GRASP(inst,mip,0.1,5,2)
+   
+   grasp = GRASP(inst,mip,0.2,5,5)
+   
+   graspTime= time.time()
    grasp.run(solu)
+   graspTime= time.time() - graspTime
+   print("Time:",graspTime)
+

@@ -53,11 +53,13 @@ class GRASP:
                continue  
             flowsV = []
             dmp = 0  # number of collected items from device d
+            random.shuffle(self.inst.Rms[m][p])
             for v in self.inst.Rms[m][p]:
                if solu.flowD[d][v] > -1: 
                   dmp = dmp + 1  #item v has already been collected from device d 
                else: 
                   ok = False
+                  random.shuffle(self.inst.flowsNode[d])    
                   for f in self.inst.flowsNode[d]:    
                      if self.inst.sV[v] < flowCap[f]:
                         flowCap[f] = flowCap[f] - self.inst.sV[v]
@@ -78,6 +80,7 @@ class GRASP:
          if self.inst.Rmt[m][p]: # try to collect a temporal dependence package P
              flowsV = []
              dmp = 0  # number of collected items from device d
+             random.shuffle(self.inst.Rms[m][p])
              for v in self.inst.Rms[m][p]:
                 ok = False
                 for d in range(self.inst.nNodes):
@@ -87,6 +90,7 @@ class GRASP:
                       dmp = dmp + 1
                       ok = True
                    else: 
+                      random.shuffle(self.inst.flowsNode[d])    
                       for f in self.inst.flowsNode[d]:    
                          if self.inst.sV[v] < flowCap[f]:
                             flowCap[f] = flowCap[f] - self.inst.sV[v]
@@ -120,7 +124,7 @@ class GRASP:
 
          self.randomizedGreedy(solu)
          
-         self.mipLS.MIPls(solu,self.timeSubProb,2)
+         self.mipLS.MIPls(solu,self.timeSubProb,3)
          
          if solu.fo > bestSolu:
             bestSolu = solu.fo
