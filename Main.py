@@ -30,10 +30,8 @@ if __name__ == "__main__":
          print("percentage of given flows out of bounds")
          exit(1)
 
-   print(GF)
-   
    inst = Instance(sfile)
-   inst.printI()
+   #inst.printI()
    solu = Solution(inst)
 
    alg = Algorithm(inst)
@@ -47,7 +45,19 @@ if __name__ == "__main__":
    grasp = GRASP(inst,mip,0.2,5,5)
    
    graspTime= time.time()
-   grasp.run(solu)
+   best = grasp.run(solu)
    graspTime= time.time() - graspTime
-   print("Time:",graspTime)
+
+   totalV = [0] * inst.nV
+   for d in range(inst.nNodes):
+      for v in range(inst.nV):
+         if best.flowD[d][v] > -1:
+            totalV[v] = totalV[v] + 1
+
+   print(sfile, ";GRASP solution:;",best.fo,";smdp;",best.smdp,";tmp;",best.tmp,";total Items;",sum(totalV),";Time;",graspTime)
+
+
+
+
+
 

@@ -8,8 +8,9 @@ from random import randint
 from itertools import chain, combinations, permutations
 
 
-seed = 2023
-random.seed(seed)
+#seed = 2023
+#random.seed(seed)
+random.seed()
 
 
 def spatial_dependency_E(nV,T):

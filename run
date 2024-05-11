@@ -1,0 +1,8 @@
+#!/bin/bash
+# fileinfo.sh
+
+for arq in  instances/E_instance_10_10* 
+do
+    python3.8  Main.py  $arq >> saida 
+done
+

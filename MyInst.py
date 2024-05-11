@@ -278,7 +278,7 @@ if __name__ == "__main__":
     
 
     # Create a folder to store the instances if it does not exist
-    Path_To_Save_Instances = "./instances/my_instances/" + str(nNodes) + "_" +str(maxL) + "/"
+    Path_To_Save_Instances = "./instances/" 
     if not os.path.exists(Path_To_Save_Instances):
         os.makedirs(Path_To_Save_Instances)
 

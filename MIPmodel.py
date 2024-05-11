@@ -424,8 +424,10 @@ class MIPmodel:
          #print(f'Objective value Extended 0: {self.sol_e0.objective_value}')
 
 # ===================================== End Extended Model_0
-
-   
+   def solveBasic():
+      sol = self.mdl.solve()
+      
+    
    def MIPls(self, solu: Solution,timeL : int, emphasis : int):
       self.mdl.parameters.timelimit.set(timeL)
       
@@ -443,7 +445,7 @@ class MIPmodel:
                self.y[d,v,solu.flowD[d][v]].lb = 0
 
       if emphasis > 1 : 
-         print("Local Search Phase 1: ",sol1.objective_value)
+         #print("Local Search Phase 1: ",sol1.objective_value)
          
          # Phase 2  : Trying to collect new sets P's by fixing devices and items, choosing new paths to collect items 
          for m in range(self.inst.nM):   # fix solution
@@ -474,7 +476,7 @@ class MIPmodel:
                      if sol1.get_value(self.tb[m,p]) > 0.5 : 
                         self.tb[m,p].lb  == 0  
  
-         print("Local Search Phase 2: ",sol2.objective_value)
+         #print("Local Search Phase 2: ",sol2.objective_value)
 
       # Phase 3  : Trying to collect new sets P by fixing items, choosing devices and paths to collect the items 
       if emphasis > 2: 
@@ -527,7 +529,7 @@ class MIPmodel:
          for e in range(len(lsPhase31)):
             self.mdl.remove_constraint(lsPhase31[e])
 
-         print("Local Search Phase 3: ",sol3.objective_value)
+         #print("Local Search Phase 3: ",sol3.objective_value)
 
        # update solution
       solu.reset()

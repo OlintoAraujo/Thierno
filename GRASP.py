@@ -1,5 +1,6 @@
 import math
 import random
+import copy
 from Instance import *
 from Solution import *
 from MIPmodel import *
@@ -115,10 +116,9 @@ class GRASP:
                    flowCap[f] = flowCap[f] + self.inst.sV[v]
  
 
-   def run(self, solu: Solution):
-      print("GRASP")
-      
-      bestSolu = 0
+   def run(self, bestSolu: Solution):
+       
+      solu = Solution(self.inst) 
       for i in range(self.iterMax):
          solu.reset()
 
@@ -126,8 +126,8 @@ class GRASP:
          
          self.mipLS.MIPls(solu,self.timeSubProb,3)
          
-         if solu.fo > bestSolu:
-            bestSolu = solu.fo
+         if solu.fo > bestSolu.fo:
+            bestSolu = copy.deepcopy(solu)
          
-      print("Best Solution: ",bestSolu)
+      return bestSolu
     
