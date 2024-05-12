@@ -6,7 +6,7 @@ from Solution import *
 from MIPmodel import *
 
 class GRASP:
-   def __init__(self, inst :Instance, mipLS :MIPmodel, alpha :float, iterMax :int, timeSubProb :float):
+   def __init__(self, inst :Instance, mipLS :BasicMIPmodel, alpha :float, iterMax :int, timeSubProb :float):
       self.mipLS = mipLS
       self.inst: Instance = inst
       
@@ -119,15 +119,22 @@ class GRASP:
    def run(self, bestSolu: Solution):
        
       solu = Solution(self.inst) 
+      soluGbest = Solution(self.inst) 
       for i in range(self.iterMax):
          solu.reset()
+         soluGbest = Solution(self.inst) 
 
-         self.randomizedGreedy(solu)
+         for k in range(10):
+            solu.reset()
+            self.randomizedGreedy(solu)
+            if solu.fo > soluGbest.fo :
+               bestGsolu = copy.deepcopy(solu)
+
          
-         self.mipLS.MIPls(solu,self.timeSubProb,3)
+         self.mipLS.MIPls(soluGbest,self.timeSubProb,3)
          
-         if solu.fo > bestSolu.fo:
-            bestSolu = copy.deepcopy(solu)
+         if soluGbest.fo > bestSolu.fo:
+            bestSolu = copy.deepcopy(soluGbest)
          
       return bestSolu
     

@@ -10,7 +10,9 @@ from itertools import chain, combinations, permutations
 
 #seed = 2023
 #random.seed(seed)
+#seed = random.seed()
 random.seed()
+
 
 
 def spatial_dependency_E(nV,T):
@@ -22,13 +24,14 @@ def spatial_dependency_E(nV,T):
     for _ in range(num_spatials):
         spatial_length = random.randint(2, spatials_max_length)
         spatial = random.sample(remaining_spatials, spatial_length)
-        spatials.append(spatial)
+        if spatial not in spatials:
+            spatials.append(spatial)
     #print(spatials)
     spatials_dict = {}
     temporals_dict = {}
     for l in range(len(spatials)):
         spatials_dict[l] = spatials[l]
-        temporals_dict[l] = random.randint(T/2, 2*T)
+        temporals_dict[l] = random.randint(T/2, (T+T/2))
     #print(spatials_dict)
     dependencies = [spatials_dict, temporals_dict]
     return dependencies
@@ -87,7 +90,8 @@ class NetworkGenerator:
         # generate a subset of telemetry items for each device
         Vd = {}
         for d in range(nNodes):
-            Vd[d] = random.sample(range(nV), random.randint(2,int(nV/2)))
+            #Vd[d] = random.sample(range(nV), random.randint(2,int(nV/2)))
+            Vd[d] = random.sample(range(nV), random.randint(2,nV))
             Vd[d].sort(reverse=False)
 
         isVd ={} # is item v provided by d ?  T or F
@@ -132,7 +136,7 @@ class NetworkGenerator:
         for f in range(nFlows):
             s = random.randint(0, nNodes-1)
             flows[f] = self.calcPath(s)
-            flowCap.append(random.randint(2*min_size, 2*max_size))
+            flowCap.append(random.randint(min_size, 2*max_size))
         
         # getting the flows crossing each device
         flowsNode = defaultdict(list)
@@ -320,7 +324,7 @@ if __name__ == "__main__":
     max_size= int(sys.argv[7])
     
     inst = NetworkGenerator(nNodes, nFlows, maxL, nV, nM, min_size, max_size)
-    inst.printI()
+    #inst.printI()
     
 
     # Create a folder to store the instances if it does not exist
@@ -328,5 +332,34 @@ if __name__ == "__main__":
     if not os.path.exists(Path_To_Save_Instances):
         os.makedirs(Path_To_Save_Instances)
 
-    inst.save_to_file(Path_To_Save_Instances + "/" + "E_instance_" + str(nNodes) + "_" + str(nFlows) + "_"\
-    +str(maxL)+"_"+ str(nV) + "_" + str(nM)+"_"+str(min_size)+"_"+str(max_size) )
+    #inst.save_to_file(Path_To_Save_Instances + "/" + "E_instance_" + str(nNodes) + "_" + str(nFlows) + "_"\
+    #+str(maxL)+"_"+ str(nV) + "_" + str(nM)+"_"+str(min_size) + "_" + str(max_size) )
+
+
+    counter = 1
+
+    # Set the base file name
+    base_filename = "E_instance_" + str(nNodes) + "_" + str(nFlows) + "_"\
+    +str(maxL)+"_"+ str(nV) + "_" + str(nM)+"_"+str(min_size) + "_" + str(max_size) + "_"
+
+    # Set the file extension
+    #file_extension = ".txt"
+
+    # Loop until a unique file name is found
+    while True:
+        # Generate the file name with the current counter value
+        filename = base_filename + str(counter) #+ file_extension
+
+        # Generate the full file path
+        file_path = os.path.join(Path_To_Save_Instances, filename)
+
+        # Check if a file with the same name already exists
+        if not os.path.exists(file_path):
+            # If not, break the loop
+            break
+
+        # If a file with the same name already exists, increment the counter
+        counter += 1
+
+    # Save the instance to the file
+    inst.save_to_file(file_path)

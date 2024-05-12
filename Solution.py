@@ -1,4 +1,5 @@
 from Instance import *
+import csv
 
 class Solution:
    # __init__ is constructor method for Solution Class
@@ -77,6 +78,12 @@ class Solution:
 
       for m in range(self.inst.nM):
          self.collectedRt[m] = [0] * len(self.inst.Rms[m])  
+
+   
+   def write_solution(self, filename, sol_info):
+      with open(filename, "a") as f:
+         writer = csv.writer(f, lineterminator='\n')
+         writer.writerow(sol_info)
 
   
    def printS(self):

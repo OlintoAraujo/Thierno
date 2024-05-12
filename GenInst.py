@@ -13,7 +13,7 @@ random.seed(seed)
 def spatial_dependency(nV,nM,T):
     list_items = list(range(nV))
     num_spatials = random.randint(2,nV/2)
-    spatials_max_length = random.randint(2,4)
+    spatials_max_length = random.randint(2,8)
     #spatials_max_length = int(nV/nM)
     spatials = []
     remaining_spatials = list_items.copy()
@@ -24,7 +24,8 @@ def spatial_dependency(nV,nM,T):
         #spatial_length = int(nV/nM)
         spatial_length = min(spatial_length, len(remaining_spatials))
         spatial = random.sample(remaining_spatials, spatial_length)
-        spatials.append(spatial)
+        if spatial not in spatials:
+            spatials.append(spatial)
         remaining_spatials = [elem for elem in remaining_spatials if elem not in spatial]
     #print(spatials)
     spatials_dict = {}
