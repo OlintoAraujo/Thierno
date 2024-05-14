@@ -508,4 +508,26 @@ class ExtendedMIPmodel:
       print(self.mdlE0.get_solve_details())
       return extended_sol_infos
       
+   def solveExtendedWarmStart(self,model,numThreads:int,timeLimit: int):
+      model.parameters.timelimit.set(timeLimit)
+      model.parameters.threads.set(numThreads)
+      basicTime= time.time()
+      SolBasic = model.solve(log_output = True)
+      basicTime = round((time.time() - basicTime), 2)
 
+      for d in range(self.inst.nNodes):
+         for v in self.inst.Vd[d]:
+            for f in self.inst.flowsNode[d]:
+               var = ['y','_',str(d),'_',str(v),'_',str(f)]
+               var = "".join(var) 
+               if SolBasic.get_value(var) > 0.5 :
+                  self.ye0[d,v,f] = 1   
+
+      print("================================================================")
+      self.mdlE0.parameters.timelimit.set(timeLimit)
+      self.mdlE0.parameters.threads.set(numThreads)
+      extendedTime= time.time()
+      SolExtended = self.mdlE0.solve(log_output = True)
+      extendedTime = round((time.time() - extendedTime), 2)
+
+ 

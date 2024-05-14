@@ -43,6 +43,15 @@ if __name__ == "__main__":
    inst_name = "_".join(os.path.basename(sfile).split("_")[:5])
    solu = Solution(inst)
    
+   mipBasic = BasicMIPmodel(inst)
+   basic_sol_infos = mipBasic.solveBasic(8,60)
+   
+   GF = int(sys.argv[2])
+   mipExtended = ExtendedMIPmodel(inst,GF)
+   #mipExtended.solveExtendedWarmStart(mipBasic.mdl,8,120)
+   extended_sol_infos = mipExtended.solveExtended(8,60)
+   exit(1)
+ 
    if len(sys.argv) < 3: 
       # solving basic model and storing the solution
       mipBasic = BasicMIPmodel(inst)
