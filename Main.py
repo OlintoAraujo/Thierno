@@ -44,12 +44,12 @@ if __name__ == "__main__":
    solu = Solution(inst)
    
    mipBasic = BasicMIPmodel(inst)
-   basic_sol_infos = mipBasic.solveBasic(8,60)
+   #basic_sol_infos = mipBasic.solveBasic(8,60)
    
    GF = int(sys.argv[2])
    mipExtended = ExtendedMIPmodel(inst,GF)
-   #mipExtended.solveExtendedWarmStart(mipBasic.mdl,8,120)
-   extended_sol_infos = mipExtended.solveExtended(8,60)
+   mipExtended.solveExtendedWarmStart(mipBasic.mdl,8,600)
+   #extended_sol_infos = mipExtended.solveExtended(8,600)
    exit(1)
  
    if len(sys.argv) < 3: 

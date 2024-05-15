@@ -26,12 +26,12 @@ class BasicMIPmodel:
       s = {(m,d,p): self.mdl.integer_var(name='s_{}_{}_{}'.format(m,d,p)) for m in range(self.inst.nM) \
           for d in range(self.inst.nNodes) for p in range(len(self.inst.Rms[m])) if self.inst.dmp[d][m][p]}
       
-      t = {(m,p): self.mdl.integer_var(name='t_{}_{}'.format(m,p)) for m in range(self.inst.nM) \
-          for p in range(len(self.inst.Rmt[m])) if self.inst.Rmt[m][p] }
+#      t = {(m,p): self.mdl.integer_var(name='t_{}_{}'.format(m,p)) for m in range(self.inst.nM) \
+#          for p in range(len(self.inst.Rmt[m])) if self.inst.Rmt[m][p] }
       
-      w = {(m,p,v): self.mdl.integer_var(name='w_{}_{}_{}'.format(m,p,v)) for m in range(self.inst.nM) \
-          for p in range(len(self.inst.Rms[m])) if self.inst.Rmt[m][p] \
-          for v in self.inst.Rms[m][p] }
+#      w = {(m,p,v): self.mdl.integer_var(name='w_{}_{}_{}'.format(m,p,v)) for m in range(self.inst.nM) \
+#          for p in range(len(self.inst.Rms[m])) if self.inst.Rmt[m][p] \
+#          for v in self.inst.Rms[m][p] }
 
 # Constraints 
        # a single telemetry item should be a collected by a single flow
@@ -67,23 +67,11 @@ class BasicMIPmodel:
          for p in range(len(self.inst.Rms[m])):
             if self.inst.Rmt[m][p]:
                for v in self.inst.Rms[m][p]:
-                  self.mdl.add_constraint(w[m, p, v] <= self.mdl.sum(self.y[d, v, f] \
+                  self.mdl.add_constraint(self.tb[m, p] <= self.mdl.sum(self.y[d, v, f] \
                   for d in range(self.inst.nNodes) if v in self.inst.Vd[d] \
                   for f in self.inst.flowsNode[d]),ctname=f'w{m,p,v}')   
  
-      # counting temporal 2
-      for m in range(self.inst.nM):
-         for p in range(len(self.inst.Rms[m])):
-            if self.inst.Rmt[m][p]:  
-               self.mdl.add_constraint(t[m,p] == self.mdl.sum(w[m, p, v] \
-               for v in self.inst.Rms[m][p]), ctname=f't{m,p}')
-      
-      # temporal dependencies
-      for m in range(self.inst.nM):
-         for p in range(len(self.inst.Rms[m])):
-            if self.inst.Rmt[m][p]:  
-               self.mdl.add_constraint(self.tb[m,p] * len(self.inst.Rms[m][p]) <= t[m,p],ctname=f'tb{m,p}')
-      
+     
 # the objective function
       obj_function = self.mdl.sum(self.sb[m,d,p] for m in range(self.inst.nM) \
       for p in range(len(self.inst.Rms[m]))  \
@@ -332,12 +320,11 @@ class ExtendedMIPmodel:
 
       se0 = {(m,d,p): self.mdlE0.integer_var(name='s_{}_{}_{}'.format(m,d,p)) for m in range(self.inst.nM) \
          for d in range(self.inst.nNodes) for p in range(len(self.inst.Rms[m])) if self.inst.dmp[d][m][p]}
-      te0 = {(m,p): self.mdlE0.integer_var(name='t_{}_{}'.format(m,p)) for m in range(self.inst.nM) \
-         for p in range(len(self.inst.Rmt[m])) if self.inst.Rmt[m][p]}
+#      te0 = {(m,p): self.mdlE0.integer_var(name='t_{}_{}'.format(m,p)) for m in range(self.inst.nM) \
+#         for p in range(len(self.inst.Rmt[m])) if self.inst.Rmt[m][p]}
 
-      we0 = {(m,p,v): self.mdlE0.integer_var(name='w_{}_{}_{}'.format(m,p,v)) for m in range(self.inst.nM) \
-         for p in range(len(self.inst.Rms[m])) if self.inst.Rmt[m][p] \
-         for v in self.inst.Rms[m][p] }
+#      we0 = {(m,p): self.mdlE0.integer_var(name='w_{}_{}'.format(m,p)) for m in range(self.inst.nM) \
+#         for p in range(len(self.inst.Rms[m])) if self.inst.Rmt[m][p] }
       # constraints
       for f in cFlows:
          self.mdlE0.add_constraint(self.mdlE0.sum(self.xe0[startNode[f], self.inst.arcs[k][1], f] \
@@ -422,23 +409,11 @@ class ExtendedMIPmodel:
          for p in range(len(self.inst.Rms[m])):
             if self.inst.Rmt[m][p]:
                for v in self.inst.Rms[m][p]:
-                  self.mdlE0.add_constraint(we0[m, p, v] <= self.mdlE0.sum(self.ye0[d, v, f] \
+                  self.mdlE0.add_constraint(self.tbe0[m, p] <= self.mdlE0.sum(self.ye0[d, v, f] \
                   for d in range(self.inst.nNodes) if v in self.inst.Vd[d] \
                   for f in range(self.inst.nFlows) if ((f in cFlows) or (d in self.inst.flows[f]))),ctname=f'w0{m,p,v}')   
   
-      # counting temporal 2
-      for m in range(self.inst.nM):
-         for p in range(len(self.inst.Rms[m])):
-            if self.inst.Rmt[m][p]:  
-               self.mdlE0.add_constraint(te0[m,p] == self.mdlE0.sum(we0[m, p, v] \
-               for v in self.inst.Rms[m][p]), ctname=f'te0{m,p}')
-      
-      # temporal dependencies
-      for m in range(self.inst.nM):
-         for p in range(len(self.inst.Rms[m])):
-            if self.inst.Rmt[m][p]:  
-               self.mdlE0.add_constraint(self.tbe0[m,p] * len(self.inst.Rms[m][p]) <= te0[m,p],ctname=f'tbe0{m,p}')
-    
+   
       obj_function = self.mdlE0.sum(self.sbe0[m,d,p] for m in range(self.inst.nM) \
          for d in range(self.inst.nNodes)  \
          for p in range(len(self.inst.Rms[m])) if self.inst.dmp[d][m][p]) \
@@ -518,7 +493,7 @@ class ExtendedMIPmodel:
                var = ['y','_',str(d),'_',str(v),'_',str(f)]
                var = "".join(var) 
                if SolBasic.get_value(var) > 0.5 :
-                  self.ye0[d,v,f] = 1   
+                  self.ye0[d,v,f].lb = 1   
 
       print("================================================================")
       self.mdlE0.parameters.timelimit.set(timeLimit)
@@ -527,4 +502,18 @@ class ExtendedMIPmodel:
       SolExtended = self.mdlE0.solve(log_output = True)
       extendedTime = round((time.time() - extendedTime), 2)
 
- 
+      for d in range(self.inst.nNodes):
+         for v in self.inst.Vd[d]:
+            for f in self.inst.flowsNode[d]:
+               var = ['y','_',str(d),'_',str(v),'_',str(f)]
+               var = "".join(var) 
+               if SolBasic.get_value(var) > 0.5 :
+                  self.ye0[d,v,f].lb = 0   
+
+      extendedTime= time.time()
+      self.mdlE0.add_mip_start(SolExtended)
+#      self.mdlE0.add_mip_start(SolBasic)
+      SolExtended = self.mdlE0.solve(log_output = True)
+      extendedTime = round((time.time() - extendedTime), 2)
+
+  
