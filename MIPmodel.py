@@ -236,7 +236,6 @@ class BasicMIPmodel:
 
          sol3 = self.mdl.solve()
          phases.append(sol3.objective_value)
-         print(phases)
          for e in range(len(lsPhase30)):   # release solution
             self.mdl.remove_constraint(lsPhase30[e])
 
@@ -274,7 +273,8 @@ class BasicMIPmodel:
                            solu.tmp = solu.tmp+1
                            solu.fo = solu.fo + 1
                            solu.collectedRt[m][p] = solu.collectedRt[m][p] + 1
-
+      
+      return phases
 
 # new class for the extended model
 

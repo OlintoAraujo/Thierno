@@ -46,11 +46,11 @@ if __name__ == "__main__":
    mipBasic = BasicMIPmodel(inst)
    #basic_sol_infos = mipBasic.solveBasic(8,60)
    
-   GF = int(sys.argv[2])
-   mipExtended = ExtendedMIPmodel(inst,GF)
-   mipExtended.solveExtendedWarmStart(mipBasic.mdl,8,600)
+   #GF = int(sys.argv[2])
+   #mipExtended = ExtendedMIPmodel(inst,GF)
+   #mipExtended.solveExtendedWarmStart(mipBasic.mdl,8,600)
    #extended_sol_infos = mipExtended.solveExtended(8,600)
-   exit(1)
+   #exit(1)
  
    if len(sys.argv) < 3: 
       # solving basic model and storing the solution
@@ -66,9 +66,12 @@ if __name__ == "__main__":
       grasp = GRASP(inst,mipBasic,0.2,5,5)  # 0.2 -> alpha, 5 -> iterations, 5 -> time local search
    
       graspTime= time.time()
-      exit(1)
-      best = grasp.run(solu)
+      bestGrasp  = grasp.run(solu)
       graspTime= round((time.time() - graspTime), 2)
+      print(bestGrasp[0].fo)
+      print(bestGrasp[1])
+      print(graspTime)
+      exit(1)
 
       totalV = [0] * inst.nV
       for d in range(inst.nNodes):

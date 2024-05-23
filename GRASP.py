@@ -119,7 +119,9 @@ class GRASP:
    def run(self, bestSolu: Solution):
        
       solu = Solution(self.inst) 
-      soluGbest = Solution(self.inst) 
+      soluGbest = Solution(self.inst)
+      bestPhases =[]
+
       for i in range(self.iterMax):
          
          soluGbest.reset() 
@@ -131,10 +133,11 @@ class GRASP:
                soluGbest = copy.deepcopy(solu)
 
          
-         self.mipLS.MIPls(soluGbest,self.timeSubProb,3)
+         phases = self.mipLS.MIPls(soluGbest,self.timeSubProb,3)
          
          if soluGbest.fo > bestSolu.fo:
             bestSolu = copy.deepcopy(soluGbest)
+            bestPhases = list(phases)
          
-      return bestSolu
+      return [bestSolu, bestPhases]
     
