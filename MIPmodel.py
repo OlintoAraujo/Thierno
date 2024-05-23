@@ -140,7 +140,8 @@ class BasicMIPmodel:
     
    def MIPls(self, solu: Solution,timeL : int, emphasis : int):
       self.mdl.parameters.timelimit.set(timeL)
-      
+      phases = []
+
       # Phase 1  :  Try collect news P's fixing the initial solution
       for d in range(self.inst.nNodes):  # fix initial solution
          for v in range(self.inst.nV):
@@ -148,7 +149,8 @@ class BasicMIPmodel:
                self.y[d,v,solu.flowD[d][v]].lb = 1
       
       sol1 = self.mdl.solve()
-      
+      phases.append(sol1.objective_value)
+
       for d in range(self.inst.nNodes): # release initial solution
          for v in range(self.inst.nV):
             if solu.flowD[d][v] > -1:
@@ -172,6 +174,7 @@ class BasicMIPmodel:
                         self.tb[m,p].lb  == 1
 
          sol2 = self.mdl.solve()
+         phases.append(sol2.objective_value)
          
          for m in range(self.inst.nM):   # release solution
             for d in range(self.inst.nNodes):
@@ -232,7 +235,8 @@ class BasicMIPmodel:
                   k = k + 1
 
          sol3 = self.mdl.solve()
-
+         phases.append(sol3.objective_value)
+         print(phases)
          for e in range(len(lsPhase30)):   # release solution
             self.mdl.remove_constraint(lsPhase30[e])
 

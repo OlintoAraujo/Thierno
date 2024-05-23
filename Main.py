@@ -55,9 +55,9 @@ if __name__ == "__main__":
    if len(sys.argv) < 3: 
       # solving basic model and storing the solution
       mipBasic = BasicMIPmodel(inst)
-      basic_sol_infos = mipBasic.solveBasic(8,60)
-      basic_sol_infos.insert(0, os.path.basename(sfile))
-      solu.write_solution(basic_path + inst_name[:-2], basic_sol_infos)
+#      basic_sol_infos = mipBasic.solveBasic(8,60)
+#      basic_sol_infos.insert(0, os.path.basename(sfile))
+#      solu.write_solution(basic_path + inst_name[:-2], basic_sol_infos)
       #solu.write_solution(basic_path + os.path.basename(sfile), basic_sol_infos)
 
       # solving the grasp and storing the solution
@@ -66,6 +66,7 @@ if __name__ == "__main__":
       grasp = GRASP(inst,mipBasic,0.2,5,5)  # 0.2 -> alpha, 5 -> iterations, 5 -> time local search
    
       graspTime= time.time()
+      exit(1)
       best = grasp.run(solu)
       graspTime= round((time.time() - graspTime), 2)
 

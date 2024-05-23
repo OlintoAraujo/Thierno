@@ -121,14 +121,14 @@ class GRASP:
       solu = Solution(self.inst) 
       soluGbest = Solution(self.inst) 
       for i in range(self.iterMax):
-         solu.reset()
-         soluGbest = Solution(self.inst) 
+         
+         soluGbest.reset() 
 
          for k in range(10):
             solu.reset()
             self.randomizedGreedy(solu)
             if solu.fo > soluGbest.fo :
-               bestGsolu = copy.deepcopy(solu)
+               soluGbest = copy.deepcopy(solu)
 
          
          self.mipLS.MIPls(soluGbest,self.timeSubProb,3)
